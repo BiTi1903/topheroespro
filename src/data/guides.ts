@@ -10,7 +10,7 @@ export interface Guide {
   content: string;
 }
 
-export let guides: Guide[] = [
+export const  guides: Guide[] = [
   {
     id: '1',
     title: 'Hướng dẫn build nhân vật mạnh nhất cho người mới',
