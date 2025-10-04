@@ -14,15 +14,14 @@ export default function Footer() {
                 <Gamepad2 className="w-6 h-6 text-white" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                GameGuide
+                Topheroes Pro
               </span>
             </div>
-            <p className="text-white text-sm mb-2">
-              Trang Web hướng dẫn game về Thời Đại Anh Hùng - Topheroes 
-            </p>
-            <p className="text-white text-sm">
-              Fan made - BiTi
-            </p>
+            <ul className="space-y-2">
+              <p className="text-white">Fan made - BiTi</p>
+              <p className="text-white">Cộng tác:</p>
+              <p className="text-white"></p>
+            </ul>
           </div>
 
           {/* Quick Links */}

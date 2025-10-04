@@ -25,24 +25,10 @@ export default function Navbar() {
       ],
     },
     {
-      name: "Shop",
+      name: "Lỗi thường gặp",
       items: [
-        { name: "Trang chủ Shop", href: "/shop" },
-        { name: "Ưu đãi", href: "/shop/offer" },
-      ],
-    },
-    {
-      name: "Tech",
-      items: [
-        { name: "Hướng dẫn", href: "/tech" },
-        { name: "Tips", href: "/tech/tips" },
-      ],
-    },
-    {
-      name: "Others",
-      items: [
-        { name: "Tin tức", href: "/news" },
-        { name: "Cộng đồng", href: "/community" },
+        { name: "Lỗi mất tài khoản", href: "/igissue/account" },
+        { name: "Lỗi game", href: "/igissue/bug" },
       ],
     },
   ];

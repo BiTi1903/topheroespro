@@ -19,7 +19,7 @@ export default function Hero() {
   rel="noopener noreferrer"
   className="bg-white/10 backdrop-blur text-white px-8 py-3 rounded-lg font-semibold border border-purple-500/30 hover:bg-white/20 transition cursor-pointer inline-block"
 >
-  Trang chủ Game
+  Tải Game
 </a>
 
           <a
@@ -28,7 +28,7 @@ export default function Hero() {
   rel="noopener noreferrer"
   className="bg-white/10 backdrop-blur text-white px-8 py-3 rounded-lg font-semibold border border-purple-500/30 hover:bg-white/20 transition cursor-pointer inline-block"
 >
-  Trang nạp
+  Web nạp
 </a>
 
         </div>

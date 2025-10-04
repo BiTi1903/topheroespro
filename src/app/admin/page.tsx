@@ -10,14 +10,14 @@ interface SubSection {
   id: string;
   title: string;
   content: string;
-  image?: string;
+  images?: string[];
 }
 
 interface Section {
   id: string;
   title: string;
   content: string;
-  image?: string;
+  images?: string[];
   subSections: SubSection[];
 }
 
@@ -30,7 +30,7 @@ interface Guide {
   mainContentImages?: string[];
   sections: Section[];
   createdAt: Timestamp;
-  pinned?: boolean; // ✅ thêm pinned
+  pinned?: boolean;
 }
 
 export default function AdminPage() {
@@ -50,7 +50,7 @@ export default function AdminPage() {
   const [mainContentImages, setMainContentImages] = useState<string[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-  const [pinned, setPinned] = useState<boolean>(false); // ✅ trạng thái ghim
+  const [pinned, setPinned] = useState<boolean>(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -79,13 +79,13 @@ export default function AdminPage() {
           mainContentImages: data.mainContentImages || [],
           sections: data.sections || [],
           createdAt: data.createdAt as Timestamp,
-          pinned: data.pinned || false, // ✅ lấy pinned
+          pinned: data.pinned || false,
         };
       });
       setGuides(guidesData.sort((a, b) => {
         if (a.pinned && !b.pinned) return -1;
         if (!a.pinned && b.pinned) return 1;
-        return b.createdAt.seconds - a.createdAt.seconds; // mới nhất tiếp theo
+        return b.createdAt.seconds - a.createdAt.seconds;
       }));
     } catch (err) {
       console.error("Lỗi khi lấy bài báo:", err);
@@ -119,7 +119,7 @@ export default function AdminPage() {
       setMainContentImages(guide.mainContentImages || []);
       setSections(guide.sections || []);
       setExpandedSections(new Set(guide.sections?.map(s => s.id) || []));
-      setPinned(guide.pinned || false); // ✅ set pinned khi sửa
+      setPinned(guide.pinned || false);
     } else {
       setEditingGuide(null);
       setTitle("");
@@ -148,13 +148,29 @@ export default function AdminPage() {
     setPinned(false);
   };
 
+  const addImageToMainContent = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setMainContentImages([...mainContentImages, ""]);
+  };
+
+  const updateMainContentImage = (index: number, value: string) => {
+    const newImages = [...mainContentImages];
+    newImages[index] = value;
+    setMainContentImages(newImages);
+  };
+
+  const removeMainContentImage = (e: React.MouseEvent<HTMLButtonElement>, index: number) => {
+    e.stopPropagation();
+    setMainContentImages(mainContentImages.filter((_, i) => i !== index));
+  };
+
   const addSection = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     const newSection: Section = {
       id: Date.now().toString(),
       title: "",
       content: "",
-      image: "",
+      images: [],
       subSections: []
     };
     setSections([...sections, newSection]);
@@ -175,13 +191,42 @@ export default function AdminPage() {
     setExpandedSections(newExpanded);
   };
 
+  const addImageToSection = (e: React.MouseEvent<HTMLButtonElement>, sectionId: string) => {
+    e.stopPropagation();
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? { ...section, images: [...(section.images || []), ""] }
+        : section
+    ));
+  };
+
+  const updateSectionImage = (sectionId: string, imageIndex: number, value: string) => {
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? {
+            ...section,
+            images: (section.images || []).map((img, i) => i === imageIndex ? value : img)
+          }
+        : section
+    ));
+  };
+
+  const removeSectionImage = (e: React.MouseEvent<HTMLButtonElement>, sectionId: string, imageIndex: number) => {
+    e.stopPropagation();
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? { ...section, images: (section.images || []).filter((_, i) => i !== imageIndex) }
+        : section
+    ));
+  };
+
   const addSubSection = (e: React.MouseEvent<HTMLButtonElement>, sectionId: string) => {
     e.stopPropagation();
     const newSubSection: SubSection = {
       id: Date.now().toString(),
       title: "",
       content: "",
-      image: ""
+      images: []
     };
     setSections(sections.map(section => 
       section.id === sectionId 
@@ -203,7 +248,7 @@ export default function AdminPage() {
     ));
   };
 
-  const removeSubSection = (e: React.MouseEvent, sectionId: string, subSectionId: string) => {
+  const removeSubSection = (e: React.MouseEvent<HTMLButtonElement>, sectionId: string, subSectionId: string) => {
     e.stopPropagation();
     setSections(sections.map(section => 
       section.id === sectionId 
@@ -212,7 +257,57 @@ export default function AdminPage() {
     ));
   };
 
-  const toggleSection = (e: React.MouseEvent, sectionId: string) => {
+  const addImageToSubSection = (e: React.MouseEvent<HTMLButtonElement>, sectionId: string, subSectionId: string) => {
+    e.stopPropagation();
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? {
+            ...section,
+            subSections: section.subSections.map(sub =>
+              sub.id === subSectionId 
+                ? { ...sub, images: [...(sub.images || []), ""] }
+                : sub
+            )
+          }
+        : section
+    ));
+  };
+
+  const updateSubSectionImage = (sectionId: string, subSectionId: string, imageIndex: number, value: string) => {
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? {
+            ...section,
+            subSections: section.subSections.map(sub =>
+              sub.id === subSectionId 
+                ? {
+                    ...sub,
+                    images: (sub.images || []).map((img, i) => i === imageIndex ? value : img)
+                  }
+                : sub
+            )
+          }
+        : section
+    ));
+  };
+
+  const removeSubSectionImage = (e: React.MouseEvent<HTMLButtonElement>, sectionId: string, subSectionId: string, imageIndex: number) => {
+    e.stopPropagation();
+    setSections(sections.map(section => 
+      section.id === sectionId 
+        ? {
+            ...section,
+            subSections: section.subSections.map(sub =>
+              sub.id === subSectionId 
+                ? { ...sub, images: (sub.images || []).filter((_, i) => i !== imageIndex) }
+                : sub
+            )
+          }
+        : section
+    ));
+  };
+
+  const toggleSection = (e: React.MouseEvent<HTMLButtonElement>, sectionId: string) => {
     e.stopPropagation();
     const newExpanded = new Set(expandedSections);
     if (newExpanded.has(sectionId)) {
@@ -234,14 +329,14 @@ export default function AdminPage() {
           ...section,
           title: section.title.trim(),
           content: section.content.trim(),
-          image: section.image?.trim() || "",
+          images: (section.images || []).filter(img => img.trim() !== ""),
           subSections: section.subSections
             .filter(sub => sub.title.trim() !== "" || sub.content.trim() !== "")
             .map(sub => ({
               ...sub,
               title: sub.title.trim(),
               content: sub.content.trim(),
-              image: sub.image?.trim() || ""
+              images: (sub.images || []).filter(img => img.trim() !== "")
             }))
         }));
 
@@ -252,7 +347,7 @@ export default function AdminPage() {
         image: image.trim(),
         mainContentImages: filteredMainContentImages,
         sections: filteredSections,
-        pinned, // ✅ lưu pinned
+        pinned,
         updatedAt: serverTimestamp(),
       };
 
@@ -274,7 +369,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
+  const handleDelete = async (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
     e.stopPropagation();
     if (!confirm("Bạn có chắc muốn xóa bài báo này?")) return;
     
@@ -377,6 +472,32 @@ export default function AdminPage() {
               <textarea placeholder="Nội dung chính" value={content} onChange={(e) => setContent(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700"></textarea>
               <input type="text" placeholder="Link ảnh đại diện" value={image} onChange={(e) => setImage(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700" />
 
+              {/* Main Content Images */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-semibold">Ảnh nội dung chính</h3>
+                  <button type="button" onClick={addImageToMainContent} className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded flex items-center space-x-1 text-sm">
+                    <Plus size={14}/> Thêm ảnh
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {mainContentImages.map((img, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <input 
+                        type="text" 
+                        placeholder={`Link ảnh ${index + 1}`} 
+                        value={img} 
+                        onChange={(e) => updateMainContentImage(index, e.target.value)} 
+                        className="flex-1 p-2 rounded bg-gray-800 border border-gray-700" 
+                      />
+                      <button type="button" onClick={(e) => removeMainContentImage(e, index)} className="bg-red-600 hover:bg-red-700 px-2 py-2 rounded">
+                        <Trash2 size={16}/>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex items-center space-x-2">
                 <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-300 rounded focus:ring-purple-500" />
                 <label className="text-purple-300 text-sm">Ghim bài viết</label>
@@ -400,7 +521,30 @@ export default function AdminPage() {
                     {expandedSections.has(section.id) && (
                       <div className="space-y-2">
                         <textarea placeholder="Nội dung" value={section.content} onChange={(e) => updateSection(section.id, "content", e.target.value)} className="w-full p-2 rounded bg-gray-800 border border-gray-700"></textarea>
-                        <input type="text" placeholder="Link ảnh" value={section.image} onChange={(e) => updateSection(section.id, "image", e.target.value)} className="w-full p-2 rounded bg-gray-800 border border-gray-700" />
+                        
+                        {/* Section Images */}
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="text-sm text-gray-400">Ảnh section</label>
+                            <button type="button" onClick={(e) => addImageToSection(e, section.id)} className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded flex items-center space-x-1 text-xs">
+                              <Plus size={12}/> Thêm ảnh
+                            </button>
+                          </div>
+                          {(section.images || []).map((img, imgIndex) => (
+                            <div key={imgIndex} className="flex items-center space-x-2 mb-1">
+                              <input 
+                                type="text" 
+                                placeholder={`Link ảnh ${imgIndex + 1}`}
+                                value={img} 
+                                onChange={(e) => updateSectionImage(section.id, imgIndex, e.target.value)} 
+                                className="flex-1 p-1 rounded bg-gray-800 border border-gray-700 text-sm" 
+                              />
+                              <button type="button" onClick={(e) => removeSectionImage(e, section.id, imgIndex)} className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded">
+                                <Trash2 size={14}/>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
 
                         <div className="ml-4">
                           <h4 className="font-semibold">SubSections</h4>
@@ -408,8 +552,32 @@ export default function AdminPage() {
                             <div key={sub.id} className="mb-2 border border-gray-600 p-2 rounded">
                               <input type="text" placeholder="Tiêu đề" value={sub.title} onChange={(e) => updateSubSection(section.id, sub.id, "title", e.target.value)} className="w-full p-1 rounded bg-gray-800 border border-gray-700 mb-1" />
                               <textarea placeholder="Nội dung" value={sub.content} onChange={(e) => updateSubSection(section.id, sub.id, "content", e.target.value)} className="w-full p-1 rounded bg-gray-800 border border-gray-700 mb-1"></textarea>
-                              <input type="text" placeholder="Link ảnh" value={sub.image} onChange={(e) => updateSubSection(section.id, sub.id, "image", e.target.value)} className="w-full p-1 rounded bg-gray-800 border border-gray-700 mb-1" />
-                              <button type="button" onClick={(e) => removeSubSection(e, section.id, sub.id)} className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded flex items-center space-x-1"><Trash2 size={16} /> Xóa Sub</button>
+                              
+                              {/* SubSection Images */}
+                              <div className="mb-1">
+                                <div className="flex justify-between items-center mb-1">
+                                  <label className="text-xs text-gray-400">Ảnh subsection</label>
+                                  <button type="button" onClick={(e) => addImageToSubSection(e, section.id, sub.id)} className="bg-blue-600 hover:bg-blue-700 px-2 py-0.5 rounded text-xs">
+                                    <Plus size={10}/> Ảnh
+                                  </button>
+                                </div>
+                                {(sub.images || []).map((img, imgIndex) => (
+                                  <div key={imgIndex} className="flex items-center space-x-1 mb-1">
+                                    <input 
+                                      type="text" 
+                                      placeholder={`Link ảnh ${imgIndex + 1}`}
+                                      value={img} 
+                                      onChange={(e) => updateSubSectionImage(section.id, sub.id, imgIndex, e.target.value)} 
+                                      className="flex-1 p-1 rounded bg-gray-800 border border-gray-700 text-xs" 
+                                    />
+                                    <button type="button" onClick={(e) => removeSubSectionImage(e, section.id, sub.id, imgIndex)} className="bg-red-600 hover:bg-red-700 px-1 py-1 rounded">
+                                      <Trash2 size={12}/>
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                              
+                              <button type="button" onClick={(e) => removeSubSection(e, section.id, sub.id)} className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded flex items-center space-x-1 text-xs"><Trash2 size={14} /> Xóa Sub</button>
                             </div>
                           ))}
                           <button type="button" onClick={(e) => addSubSection(e, section.id)} className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded flex items-center space-x-1"><Plus size={16}/> Thêm Sub</button>
