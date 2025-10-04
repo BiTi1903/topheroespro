@@ -1,5 +1,6 @@
 import React from 'react';
 import { Gamepad2, Facebook, Youtube, Twitter, Instagram } from 'lucide-react';
+import { FaDiscord, FaFacebook } from 'react-icons/fa';
 
 export default function Footer() {
   return (
@@ -16,10 +17,10 @@ export default function Footer() {
                 GameGuide
               </span>
             </div>
-            <p className="text-purple-300 text-sm">
+            <p className="text-white text-sm mb-2">
               Trang Web hướng dẫn game về Thời Đại Anh Hùng - Topheroes 
             </p>
-            <p className="text-purple-300 text-sm">
+            <p className="text-white text-sm">
               Fan made - BiTi
             </p>
           </div>
@@ -28,26 +29,10 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4">Liên kết nhanh</h3>
             <ul className="space-y-2">
-              <li>
-                <a href="/about" className="text-purple-300 hover:text-white transition-colors duration-200 text-sm">
-                  Về chúng tôi
-                </a>
-              </li>
-              <li>
-                <a href="/contact" className="text-purple-300 hover:text-white transition-colors duration-200 text-sm">
-                  Liên hệ
-                </a>
-              </li>
-              <li>
-                <a href="/privacy" className="text-purple-300 hover:text-white transition-colors duration-200 text-sm">
-                  Chính sách bảo mật
-                </a>
-              </li>
-              <li>
-                <a href="/terms" className="text-purple-300 hover:text-white transition-colors duration-200 text-sm">
-                  Điều khoản sử dụng
-                </a>
-              </li>
+              <li><a href="/about" className="text-white hover:text-white transition-colors duration-200 text-sm">Về chúng tôi</a></li>
+              <li><a href="/contact" className="text-white hover:text-white transition-colors duration-200 text-sm">Liên hệ</a></li>
+              <li><a href="/privacy" className="text-white hover:text-white transition-colors duration-200 text-sm">Chính sách bảo mật</a></li>
+              <li><a href="/terms" className="text-white hover:text-white transition-colors duration-200 text-sm">Điều khoản sử dụng</a></li>
             </ul>
           </div>
 
@@ -55,55 +40,70 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4">Thể loại</h3>
             <ul className="space-y-2">
-              <li>
-                  RPG Games
-              </li>
-              <li>
-                  MOBA Games
-              </li>
-
+              <p className="text-white">RPG Games</p>
+              <p className="text-white">MOBA Games</p>
             </ul>
           </div>
 
           {/* Social & Newsletter */}
           <div className="space-y-4">
-            <h3 className="text-white font-semibold mb-4">Kết nối với chúng tôi</h3>
+            <h3 className="text-white font-semibold mb-4">Kết nối với Thời Đại Anh Hùng</h3>
             <div className="flex space-x-3">
-  <a
-    href="https://www.facebook.com/iambiti"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="bg-white/10 p-3 rounded-xl hover:bg-purple-500 transition-colors duration-200"
-  >
-    <Facebook className="w-5 h-5 text-purple-300" />
-  </a>
-  <a
-    href="https://www.youtube.com/yourchannel"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="bg-white/10 p-3 rounded-xl hover:bg-purple-500 transition-colors duration-200"
-  >
-    <Youtube className="w-5 h-5 text-purple-300" />
-  </a>
-  <a
-    href="https://twitter.com/yourprofile"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="bg-white/10 p-3 rounded-xl hover:bg-purple-500 transition-colors duration-200"
-  >
-    <Twitter className="w-5 h-5 text-purple-300" />
-  </a>
-  <a
-    href="https://www.instagram.com/yourprofile"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="bg-white/10 p-3 rounded-xl hover:bg-purple-500 transition-colors duration-200"
-  >
-    <Instagram className="w-5 h-5 text-purple-300" />
-  </a>
-</div>
+              {/* <a
+                href="https://www.facebook.com/iambiti"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white/10 p-3 rounded-xl hover:bg-purple-500 transition-colors duration-200"
+              >
+                <Facebook className="w-5 h-5 text-white" />
+              </a>
+              <a
+                href="https://www.youtube.com/yourchannel"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white/10 p-3 rounded-xl hover:bg-purple-500 transition-colors duration-200"
+              >
+                <Youtube className="w-5 h-5 text-white" />
+              </a>
+              <a
+                href="https://twitter.com/yourprofile"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white/10 p-3 rounded-xl hover:bg-purple-500 transition-colors duration-200"
+              >
+                <Twitter className="w-5 h-5 text-white" />
+              </a>
+              <a
+                href="https://www.instagram.com/yourprofile"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white/10 p-3 rounded-xl hover:bg-purple-500 transition-colors duration-200"
+              >
+                <Instagram className="w-5 h-5 text-white" />
+              </a> */}
+              {/* Facebook Group */}
+              <a
+                href="https://www.facebook.com/thoidaianhhungfanpage"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white/10 p-3 rounded-xl hover:bg-purple-500 transition-colors duration-200"
+              >
+                <FaFacebook className="w-5 h-5 text-white" />
+              </a>
+              {/* Discord */}
+              <a
+                href="https://discord.gg/dGwasGWE"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white/10 p-3 rounded-xl hover:bg-purple-500 transition-colors duration-200"
+              >
+                <FaDiscord className="w-5 h-5 text-white" />
+              </a>
 
-            <p className="text-purple-300 text-sm">Nhận tin tức mới nhất</p>
+              
+            </div>
+
+            <p className="text-white text-sm">Nhận tin tức mới nhất</p>
             <input
               type="email"
               placeholder="Email của bạn"
@@ -117,7 +117,7 @@ export default function Footer() {
 
         {/* Copyright */}
         <div className="border-t border-purple-500/20 mt-8 pt-8 text-center">
-          <p className="text-purple-300 text-sm">
+          <p className="text-white text-sm">
             &copy; 2025 BiTi. Made with ❤️ for gamers in Vietnam
           </p>
         </div>

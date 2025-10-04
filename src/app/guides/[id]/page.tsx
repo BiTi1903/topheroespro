@@ -191,7 +191,7 @@ export default function GuideDetailPage() {
                 <Eye className="w-5 h-5" />
                 <span>{guide.views || "0"} lượt xem</span>
               </div>
-
+              
             </div>
           </div>
         </div>

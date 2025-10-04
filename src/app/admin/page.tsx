@@ -30,6 +30,7 @@ interface Guide {
   mainContentImages?: string[];
   sections: Section[];
   createdAt: Timestamp;
+  pinned?: boolean; // ✅ thêm pinned
 }
 
 export default function AdminPage() {
@@ -49,6 +50,7 @@ export default function AdminPage() {
   const [mainContentImages, setMainContentImages] = useState<string[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [pinned, setPinned] = useState<boolean>(false); // ✅ trạng thái ghim
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -76,10 +78,15 @@ export default function AdminPage() {
           image: data.image || "",
           mainContentImages: data.mainContentImages || [],
           sections: data.sections || [],
-          createdAt: data.createdAt as Timestamp
+          createdAt: data.createdAt as Timestamp,
+          pinned: data.pinned || false, // ✅ lấy pinned
         };
       });
-      setGuides(guidesData.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds));
+      setGuides(guidesData.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return b.createdAt.seconds - a.createdAt.seconds; // mới nhất tiếp theo
+      }));
     } catch (err) {
       console.error("Lỗi khi lấy bài báo:", err);
     }
@@ -112,6 +119,7 @@ export default function AdminPage() {
       setMainContentImages(guide.mainContentImages || []);
       setSections(guide.sections || []);
       setExpandedSections(new Set(guide.sections?.map(s => s.id) || []));
+      setPinned(guide.pinned || false); // ✅ set pinned khi sửa
     } else {
       setEditingGuide(null);
       setTitle("");
@@ -121,6 +129,7 @@ export default function AdminPage() {
       setMainContentImages([]);
       setSections([]);
       setExpandedSections(new Set());
+      setPinned(false);
     }
     setShowModal(true);
   };
@@ -136,6 +145,7 @@ export default function AdminPage() {
     setMainContentImages([]);
     setSections([]);
     setExpandedSections(new Set());
+    setPinned(false);
   };
 
   const addSection = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -216,11 +226,8 @@ export default function AdminPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // ✅ FIXED: Lưu tất cả các trường, kể cả khi rỗng
-      // Lọc bỏ ảnh rỗng trong mainContentImages
       const filteredMainContentImages = mainContentImages.filter(img => img.trim() !== "");
       
-      // Lọc bỏ sections rỗng và subsections rỗng
       const filteredSections = sections
         .filter(section => section.title.trim() !== "" || section.content.trim() !== "")
         .map(section => ({
@@ -241,10 +248,11 @@ export default function AdminPage() {
       const guideData = {
         title: title.trim(),
         description: description.trim(),
-        content: content.trim(), // ✅ Luôn lưu, kể cả khi rỗng
+        content: content.trim(),
         image: image.trim(),
         mainContentImages: filteredMainContentImages,
         sections: filteredSections,
+        pinned, // ✅ lưu pinned
         updatedAt: serverTimestamp(),
       };
 
@@ -290,37 +298,24 @@ export default function AdminPage() {
                 <span className="text-3xl">🔐</span>
               </div>
               <h2 className="text-3xl font-bold text-white">Admin Panel</h2>
-              <p className="text-purple-300 mt-2">Đăng nhập để quản lý bài viết</p>
+              <p className="text-purple-300 mt-2">Đăng nhập để quản lý</p>
             </div>
-            
-            {error && (
-              <div className="bg-red-500/20 border border-red-500/50 text-red-300 p-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-            
             <input
               type="email"
               placeholder="Email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full p-3 rounded-lg bg-gray-800/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition"
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-purple-500"
             />
-            
             <input
               type="password"
               placeholder="Mật khẩu"
               value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full p-3 rounded-lg bg-gray-800/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition"
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-purple-500"
             />
-            
-            <button 
-              type="submit" 
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition shadow-lg shadow-purple-500/30"
-            >
-              Đăng nhập
-            </button>
+            {error && <p className="text-red-500">{error}</p>}
+            <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-lg font-semibold">Đăng nhập</button>
           </form>
         </div>
       </div>
@@ -328,313 +323,105 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950/20 to-gray-950 text-white">
-      {/* Header */}
-      <div className="bg-black/40 backdrop-blur-md border-b border-purple-500/20 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
-              <p className="text-purple-300 text-sm mt-1">Quản lý bài viết</p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={(e) => openModal(e)}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition shadow-lg shadow-purple-500/30"
-              >
-                <Plus className="w-5 h-5" />
-                <span>Thêm bài báo</span>
-              </button>
-              <button
-                onClick={handleLogout}
-                className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-300 px-4 py-2 rounded-lg flex items-center space-x-2 transition"
-              >
-                <LogOut className="w-5 h-5" />
-                <span>Đăng xuất</span>
-              </button>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-950 text-white p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Quản lý Bài Viết</h1>
+        <button onClick={handleLogout} className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg">
+          <LogOut size={18} /> <span>Đăng xuất</span>
+        </button>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white/5 backdrop-blur-md border border-purple-500/20 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-300 text-sm">Tổng bài viết</p>
-                <p className="text-3xl font-bold text-white mt-1">{guides.length}</p>
-              </div>
-              <div className="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center">
-                <Eye className="w-6 h-6 text-purple-400" />
-              </div>
-            </div>
-          </div>
-        </div>
+      <button onClick={(e) => openModal(e)} className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg mb-4">
+        <Plus size={18} /> <span>Thêm Bài Mới</span>
+      </button>
 
-        {/* Guides List */}
-        <div className="bg-white/5 backdrop-blur-md border border-purple-500/20 rounded-xl overflow-hidden">
-          <div className="p-6 border-b border-purple-500/20">
-            <h2 className="text-xl font-bold text-white">Danh sách bài viết</h2>
-          </div>
-          
-          {guides.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="text-6xl mb-4">📝</div>
-              <p className="text-purple-300 text-lg">Chưa có bài viết nào</p>
-              <button
-                onClick={(e) => openModal(e)}
-                className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition"
-              >
-                Thêm bài viết đầu tiên
-              </button>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-black/40">
-                  <tr>
-                    <th className="text-left p-4 text-purple-300 font-semibold">Ảnh</th>
-                    <th className="text-left p-4 text-purple-300 font-semibold">Tiêu đề</th>
-                    <th className="text-left p-4 text-purple-300 font-semibold">Mô tả</th>
-                    <th className="text-center p-4 text-purple-300 font-semibold">Sections</th>
-                    <th className="text-right p-4 text-purple-300 font-semibold">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {guides.map((guide) => (
-                    <tr key={guide.id} className="border-t border-purple-500/10 hover:bg-white/5 transition">
-                      <td className="p-4">
-                        <img
-                          src={guide.image}
-                          alt={guide.title}
-                          className="w-16 h-16 object-cover rounded-lg"
-                          onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
-                        />
-                      </td>
-                      <td className="p-4">
-                        <p className="text-white font-semibold line-clamp-1">{guide.title}</p>
-                      </td>
-                      <td className="p-4">
-                        <p className="text-purple-300 text-sm line-clamp-2">{guide.description}</p>
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className="bg-purple-600/20 text-purple-300 px-3 py-1 rounded-full text-sm">
-                          {guide.sections?.length || 0}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={(e) => openModal(e, guide)}
-                            className="bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 text-blue-300 p-2 rounded-lg transition"
-                            title="Sửa"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => handleDelete(e, guide.id)}
-                            className="bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-300 p-2 rounded-lg transition"
-                            title="Xóa"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border border-gray-700">
+          <thead className="bg-gray-800">
+            <tr>
+              <th className="p-4">Tiêu đề</th>
+              <th className="p-4">Mô tả</th>
+              <th className="p-4">Ngày tạo</th>
+              <th className="p-4">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {guides.map(guide => (
+              <tr key={guide.id} className="border-t border-gray-700 hover:bg-gray-800/50">
+                <td className="p-4 font-semibold">
+                  {guide.title} {guide.pinned && <span className="bg-yellow-400 text-black px-2 py-0.5 rounded text-xs ml-2">GHIM</span>}
+                </td>
+                <td className="p-4">{guide.description}</td>
+                <td className="p-4">{guide.createdAt?.toDate().toLocaleString()}</td>
+                <td className="p-4 flex space-x-2">
+                  <button onClick={(e) => openModal(e, guide)} className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded flex items-center space-x-1"><Edit2 size={16} /><span>Sửa</span></button>
+                  <button onClick={(e) => handleDelete(e, guide.id)} className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded flex items-center space-x-1"><Trash2 size={16} /><span>Xóa</span></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-black/30 backdrop-blur-md border border-purple-500/20 rounded-2xl w-full max-w-4xl p-6 relative overflow-y-auto max-h-[90vh]">
-            <button onClick={closeModal} className="absolute top-4 right-4 text-purple-300 hover:text-white transition">
-              <X className="w-6 h-6" />
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-2xl w-full max-w-3xl overflow-y-auto max-h-[90vh] relative">
+            <button onClick={closeModal} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+              <X size={24} />
             </button>
-
-            <h2 className="text-2xl font-bold text-white mb-4">
-              {editingGuide ? "Sửa bài viết" : "Thêm bài viết"}
-            </h2>
-
+            <h2 className="text-2xl font-bold mb-4">{editingGuide ? "Sửa Bài" : "Thêm Bài Mới"}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Tiêu đề */}
-              <div>
-                <label className="block text-purple-300 mb-2 text-sm font-semibold">Tiêu đề</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full p-3 rounded-lg bg-gray-700/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition"
-                  required
-                />
-              </div>
+              <input type="text" placeholder="Tiêu đề" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700" />
+              <input type="text" placeholder="Mô tả" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700" />
+              <textarea placeholder="Nội dung chính" value={content} onChange={(e) => setContent(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700"></textarea>
+              <input type="text" placeholder="Link ảnh đại diện" value={image} onChange={(e) => setImage(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700" />
 
-              {/* Mô tả */}
-              <div>
-                <label className="block text-purple-300 mb-2 text-sm font-semibold">Mô tả</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full p-3 rounded-lg bg-gray-700/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition"
-                  rows={2}
-                />
-              </div>
-
-              {/* Hero Image */}
-              <div>
-                <label className="block text-purple-300 mb-2 text-sm font-semibold">Ảnh đại diện</label>
-                <input
-                  type="text"
-                  placeholder="https://example.com/hero.jpg"
-                  value={image}
-                  onChange={(e) => setImage(e.target.value)}
-                  className="w-full p-3 rounded-lg bg-gray-700/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition"
-                />
-              </div>
-
-              {/* Main Content Images */}
-              <div>
-                <label className="block text-purple-300 mb-2 text-sm font-semibold">Ảnh nội dung chính</label>
-                <div className="flex flex-col space-y-2">
-                  {mainContentImages.map((img, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <input
-                        type="text"
-                        placeholder="https://example.com/image.jpg"
-                        value={img}
-                        onChange={(e) => {
-                          const newImages = [...mainContentImages];
-                          newImages[index] = e.target.value;
-                          setMainContentImages(newImages);
-                        }}
-                        className="w-full p-2 rounded-lg bg-gray-700/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setMainContentImages(mainContentImages.filter((_, i) => i !== index))}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() => setMainContentImages([...mainContentImages, ""])}
-                    className="bg-green-600/20 hover:bg-green-600/30 border border-green-500/50 text-green-300 px-3 py-1 rounded-lg flex items-center space-x-1 text-sm transition"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Thêm ảnh</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Nội dung */}
-              <div>
-                <label className="block text-purple-300 mb-2 text-sm font-semibold">Nội dung</label>
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  className="w-full p-3 rounded-lg bg-gray-700/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition"
-                  rows={4}
-                />
+              <div className="flex items-center space-x-2">
+                <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-300 rounded focus:ring-purple-500" />
+                <label className="text-purple-300 text-sm">Ghim bài viết</label>
               </div>
 
               {/* Sections */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center mb-2">
-                  <label className="text-purple-300 font-semibold">Sections</label>
-                  <button
-                    type="button"
-                    onClick={addSection}
-                    className="flex items-center space-x-1 text-sm text-green-300 hover:text-green-400 transition"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Thêm section</span>
-                  </button>
-                </div>
-
+              <div>
+                <h3 className="font-semibold mb-2">Sections</h3>
                 {sections.map(section => (
-                  <div key={section.id} className="border border-purple-500/30 rounded-lg p-3 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <input
-                        type="text"
-                        placeholder="Tiêu đề section"
-                        value={section.title}
-                        onChange={(e) => updateSection(section.id, "title", e.target.value)}
-                        className="flex-1 p-2 rounded-lg bg-gray-700/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 text-sm"
-                      />
-                      <div className="flex items-center space-x-1">
-                        <button type="button" onClick={(e) => toggleSection(e, section.id)} className="text-purple-300 hover:text-white">
-                          {expandedSections.has(section.id) ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  <div key={section.id} className="mb-2 border border-gray-700 p-3 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <input type="text" placeholder="Tiêu đề section" value={section.title} onChange={(e) => updateSection(section.id, "title", e.target.value)} className="flex-1 p-2 rounded bg-gray-800 border border-gray-700" />
+                      <div className="flex space-x-1 ml-2">
+                        <button type="button" onClick={(e) => toggleSection(e, section.id)} className="px-2 py-1 bg-gray-700 rounded hover:bg-gray-600">
+                          {expandedSections.has(section.id) ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
                         </button>
-                        <button type="button" onClick={(e) => removeSection(e, section.id)} className="text-red-400 hover:text-red-300">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <button type="button" onClick={(e) => removeSection(e, section.id)} className="px-2 py-1 bg-red-600 rounded hover:bg-red-700"><Trash2 size={16}/></button>
                       </div>
                     </div>
 
                     {expandedSections.has(section.id) && (
-                      <div className="pl-2 space-y-2">
-                        <textarea
-                          placeholder="Nội dung section"
-                          value={section.content}
-                          onChange={(e) => updateSection(section.id, "content", e.target.value)}
-                          className="w-full p-2 rounded-lg bg-gray-700/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 text-sm"
-                          rows={2}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Ảnh section"
-                          value={section.image}
-                          onChange={(e) => updateSection(section.id, "image", e.target.value)}
-                          className="w-full p-2 rounded-lg bg-gray-700/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 text-sm"
-                        />
+                      <div className="space-y-2">
+                        <textarea placeholder="Nội dung" value={section.content} onChange={(e) => updateSection(section.id, "content", e.target.value)} className="w-full p-2 rounded bg-gray-800 border border-gray-700"></textarea>
+                        <input type="text" placeholder="Link ảnh" value={section.image} onChange={(e) => updateSection(section.id, "image", e.target.value)} className="w-full p-2 rounded bg-gray-800 border border-gray-700" />
 
-                        {/* Subsections */}
-                        <div className="pl-2">
+                        <div className="ml-4">
+                          <h4 className="font-semibold">SubSections</h4>
                           {section.subSections.map(sub => (
-                            <div key={sub.id} className="flex items-center space-x-2 mb-1">
-                              <input
-                                type="text"
-                                placeholder="Tiêu đề subsection"
-                                value={sub.title}
-                                onChange={(e) => updateSubSection(section.id, sub.id, "title", e.target.value)}
-                                className="flex-1 p-2 rounded-lg bg-gray-700/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 text-sm"
-                              />
-                              <button type="button" onClick={(e) => removeSubSection(e, section.id, sub.id)} className="text-red-400 hover:text-red-300">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                            <div key={sub.id} className="mb-2 border border-gray-600 p-2 rounded">
+                              <input type="text" placeholder="Tiêu đề" value={sub.title} onChange={(e) => updateSubSection(section.id, sub.id, "title", e.target.value)} className="w-full p-1 rounded bg-gray-800 border border-gray-700 mb-1" />
+                              <textarea placeholder="Nội dung" value={sub.content} onChange={(e) => updateSubSection(section.id, sub.id, "content", e.target.value)} className="w-full p-1 rounded bg-gray-800 border border-gray-700 mb-1"></textarea>
+                              <input type="text" placeholder="Link ảnh" value={sub.image} onChange={(e) => updateSubSection(section.id, sub.id, "image", e.target.value)} className="w-full p-1 rounded bg-gray-800 border border-gray-700 mb-1" />
+                              <button type="button" onClick={(e) => removeSubSection(e, section.id, sub.id)} className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded flex items-center space-x-1"><Trash2 size={16} /> Xóa Sub</button>
                             </div>
                           ))}
-                          <button
-                            type="button"
-                            onClick={(e) => addSubSection(e, section.id)}
-                            className="flex items-center space-x-1 text-sm text-green-300 hover:text-green-400 transition"
-                          >
-                            <Plus className="w-3 h-3" />
-                            <span>Thêm subsection</span>
-                          </button>
+                          <button type="button" onClick={(e) => addSubSection(e, section.id)} className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded flex items-center space-x-1"><Plus size={16}/> Thêm Sub</button>
                         </div>
                       </div>
                     )}
                   </div>
                 ))}
+                <button type="button" onClick={addSection} className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded flex items-center space-x-1"><Plus size={16}/> Thêm Section</button>
               </div>
 
-              <button type="submit" className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition shadow-lg shadow-purple-500/30 flex items-center justify-center space-x-2">
-                <Save className="w-4 h-4" />
-                <span>Lưu bài viết</span>
-              </button>
+              <button type="submit" className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded mt-4 flex items-center space-x-2"><Save size={18}/> Lưu Bài</button>
             </form>
           </div>
         </div>
