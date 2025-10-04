@@ -27,8 +27,8 @@ export default function Navbar() {
     {
       name: "Lỗi thường gặp",
       items: [
-        { name: "Lỗi mất tài khoản", href: "/igissue/account" },
-        { name: "Lỗi game", href: "/igissue/bug" },
+        { name: "Lỗi mất tài khoản", href: "/" },
+        { name: "Lỗi game", href: "/" },
       ],
     },
   ];
