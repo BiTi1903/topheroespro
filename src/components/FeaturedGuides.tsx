@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Eye } from "lucide-react";
-import { collection, getDocs, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, increment, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase";
 
 interface Guide {
@@ -15,7 +15,7 @@ interface Guide {
   category?: string;
   description: string;
   pinned?: boolean;
-  createdAt?: any;
+  createdAt?: Date; // Sử dụng Date thay vì any
 }
 
 interface FeaturedGuidesProps {
@@ -30,12 +30,29 @@ export default function FeaturedGuides({ activeCategory = "all" }: FeaturedGuide
     const fetchGuides = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "guides"));
-        const guidesData: Guide[] = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          views: Number(doc.data().views || 0),
-          pinned: doc.data().pinned || false,
-        } as Guide));
+        const guidesData: Guide[] = querySnapshot.docs.map(doc => {
+          const data = doc.data() as {
+            title: string;
+            game?: string;
+            image: string;
+            views?: number;
+            category?: string;
+            description: string;
+            pinned?: boolean;
+            createdAt?: Timestamp;
+          };
+          return {
+            id: doc.id,
+            title: data.title,
+            game: data.game,
+            image: data.image,
+            views: Number(data.views || 0),
+            category: data.category,
+            description: data.description,
+            pinned: data.pinned || false,
+            createdAt: data.createdAt?.toDate(), // convert Timestamp -> Date
+          };
+        });
 
         // Pinned lên đầu
         guidesData.sort((a, b) => Number(b.pinned) - Number(a.pinned));
@@ -51,7 +68,9 @@ export default function FeaturedGuides({ activeCategory = "all" }: FeaturedGuide
     try {
       const guideRef = doc(db, "guides", id);
       await updateDoc(guideRef, { views: increment(1) });
-      setGuides(prev => prev.map(g => (g.id === id ? { ...g, views: (g.views || 0) + 1 } : g)));
+      setGuides(prev =>
+        prev.map(g => (g.id === id ? { ...g, views: (g.views || 0) + 1 } : g))
+      );
     } catch (error) {
       console.error("Lỗi khi tăng lượt xem:", error);
     }
@@ -73,10 +92,9 @@ export default function FeaturedGuides({ activeCategory = "all" }: FeaturedGuide
             {activeCategory === "all" ? "Chưa có bài viết nào" : "Không có bài viết trong danh mục này"}
           </h3>
           <p className="text-gray-500">
-            {activeCategory === "all" 
-              ? "Hãy thêm bài viết đầu tiên từ admin panel" 
-              : `Chưa có bài viết nào trong danh mục "${activeCategory}"`
-            }
+            {activeCategory === "all"
+              ? "Hãy thêm bài viết đầu tiên từ admin panel"
+              : `Chưa có bài viết nào trong danh mục "${activeCategory}"`}
           </p>
         </div>
       </div>
