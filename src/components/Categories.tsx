@@ -1,83 +1,62 @@
 "use client";
-import { useState, useEffect } from "react";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
-import { db } from "@/firebase";
-import { useRouter } from "next/navigation";
-import * as Icons from "lucide-react";
 
-interface Guide {
-  id: string;
-  title: string;
-  game?: string;
-  image: string;
-  views?: number;
-  category?: string;
-  description: string;
-  createdAt: any; // Firestore Timestamp
-  pinned?: boolean;
-}
+import { useState, useEffect } from "react";
+import { collection, getDocs, query, orderBy, DocumentData, Timestamp } from "firebase/firestore";
+import { db } from "@/firebase";
+import * as Icons from "lucide-react";
 
 interface Category {
   id: string;
   name: string;
-  createdAt: any; // Firestore Timestamp
+  createdAt?: Date;
 }
 
-export default function Categories() {
-  const router = useRouter();
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [guides, setGuides] = useState<Guide[]>([]);
+interface CategoriesProps {
+  onCategoryChange: (category: string) => void;
+}
+
+export default function Categories({ onCategoryChange }: CategoriesProps) {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState("all");
 
-  // Lấy dữ liệu từ Firestore
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+    const fetchCategories = async () => {
       try {
-        // Lấy categories
-        const categoriesSnapshot = await getDocs(query(collection(db, "categories"), orderBy("name")));
-        const categoriesData: Category[] = categoriesSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Category[];
-        setCategories(categoriesData);
+        const categoriesSnapshot = await getDocs(
+          query(collection(db, "categories"), orderBy("name"))
+        );
 
+        const categoriesData: Category[] = categoriesSnapshot.docs.map(doc => {
+          const data = doc.data() as {
+            name: string;
+            createdAt?: Timestamp;
+          };
+          return {
+            id: doc.id,
+            name: data.name,
+            createdAt: data.createdAt?.toDate(), // convert Timestamp -> Date
+          };
+        });
+
+        setCategories(categoriesData);
       } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu:", error);
-      } finally {
-        setLoading(false);
+        console.error("Lỗi khi lấy categories:", error);
       }
     };
 
-    fetchData();
+    fetchCategories();
   }, []);
 
-
-
-  const handleGuideClick = (guideId: string) => {
-    router.push(`/guides/${guideId}`);
+  const handleClick = (categoryName: string) => {
+    setActiveCategory(categoryName);
+    onCategoryChange(categoryName);
   };
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mb-4"></div>
-            <p className="text-purple-500 text-lg">Đang tải...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Thanh chọn category */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-4">
+    <div className="relative z-10 py-4 mt-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center space-x-2 overflow-x-auto">
         <button
-          onClick={() => setActiveCategory("all")}
+          onClick={() => handleClick("all")}
           className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition whitespace-nowrap ${
             activeCategory === "all"
               ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50"
@@ -85,13 +64,13 @@ export default function Categories() {
           }`}
         >
           <Icons.Grid3X3 className="w-5 h-5" />
-          <span>Tất cả</span>
+          <span>Nổi bật</span>
         </button>
-        
-        {categories.map((category) => (
+
+        {categories.map(category => (
           <button
             key={category.id}
-            onClick={() => setActiveCategory(category.name)}
+            onClick={() => handleClick(category.name)}
             className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition whitespace-nowrap ${
               activeCategory === category.name
                 ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50"
@@ -103,8 +82,6 @@ export default function Categories() {
           </button>
         ))}
       </div>
-
-
     </div>
   );
 }
