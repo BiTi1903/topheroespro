@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Eye, Clock } from "lucide-react";
-import { collection, getDocs } from "firebase/firestore";
+import { ChevronRight, Eye } from "lucide-react";
+import { collection, getDocs, doc, updateDoc, increment } from "firebase/firestore";
 import { db } from "@/firebase";
 
 interface Guide {
@@ -11,8 +11,7 @@ interface Guide {
   title: string;
   game: string;
   image: string;
-  views: string;
-  time: string;
+  views: number; // sửa sang number để dễ cộng
   category: string;
   description: string;
 }
@@ -27,6 +26,7 @@ export default function FeaturedGuides() {
         const guidesData: Guide[] = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
+          views: Number(doc.data().views || 0), // đảm bảo là number
         } as Guide));
         setGuides(guidesData);
       } catch (error) {
@@ -36,6 +36,20 @@ export default function FeaturedGuides() {
 
     fetchGuides();
   }, []);
+
+  const handleClick = async (id: string) => {
+    try {
+      const guideRef = doc(db, "guides", id);
+      await updateDoc(guideRef, { views: increment(1) });
+
+      // Cập nhật local state để tăng lượt xem ngay lập tức
+      setGuides(prev =>
+        prev.map(g => (g.id === id ? { ...g, views: g.views + 1 } : g))
+      );
+    } catch (error) {
+      console.error("Lỗi khi tăng lượt xem:", error);
+    }
+  };
 
   return (
     <div className="lg:col-span-2 space-y-6">
@@ -48,50 +62,46 @@ export default function FeaturedGuides() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-  {guides.map((guide) => (
-    <Link key={guide.id} href={`/guides/${guide.id}`}>
-      <div className="group bg-white/5 backdrop-blur-md rounded-xl overflow-hidden border border-purple-500/20 hover:border-purple-500/50 transition cursor-pointer flex flex-col h-full">
-        {/* Hình ảnh */}
-        <div className="relative h-48 overflow-hidden flex-shrink-0">
-          <img
-            src={guide.image}
-            alt={guide.title}
-            className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
-          />
-          {/* <div className="absolute top-4 left-4">
-            <span className="bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-              {guide.category}
-            </span>
-          </div> */}
-        </div>
+        {guides.map((guide) => (
+          <Link
+            key={guide.id}
+            href={`/guides/${guide.id}`}
+            onClick={() => handleClick(guide.id)}
+          >
+            <div className="group bg-white/5 backdrop-blur-md rounded-xl overflow-hidden border border-purple-500/20 hover:border-purple-500/50 transition cursor-pointer flex flex-col h-full">
+              {/* Hình ảnh */}
+              <div className="relative h-48 overflow-hidden flex-shrink-0">
+                <img
+                  src={guide.image}
+                  alt={guide.title}
+                  className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+                />
+              </div>
 
-        {/* Nội dung */}
-        <div className="p-6 flex-1 flex flex-col">
-          <div className="text-sm text-purple-400 mb-2">{guide.game}</div>
-          <h3 className="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition">
-            {guide.title}
-          </h3>
-          <p className="text-purple-200 mb-4 line-clamp-3">
-            {guide.description}
-          </p>
+              {/* Nội dung */}
+              <div className="p-6 flex-1 flex flex-col">
+                <div className="text-sm text-purple-400 mb-2">{guide.game}</div>
+                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition">
+                  {guide.title}
+                </h3>
+                <p className="text-purple-200 mb-4 line-clamp-3">
+                  {guide.description}
+                </p>
 
-          {/* Thông tin lượt xem & thời gian */}
-          <div className="flex items-center space-x-6 text-sm text-purple-300 mt-auto">
-            <div className="flex items-center space-x-1">
-              <Eye className="w-4 h-4" />
-              <span>{guide.views}</span>
+                {/* Lượt xem với tooltip */}
+                <div className="flex items-center space-x-6 text-sm text-purple-300 mt-auto">
+                  <div className="relative flex items-center space-x-1 group cursor-pointer">
+                    <Eye className="w-4 h-4 transition-colors duration-200 group-hover:text-white" />
+                    <span className="transition-colors duration-200 group-hover:text-white">{guide.views}</span>
+                    
+                  </div>
+                </div>
+
+              </div>
             </div>
-            <div className="flex items-center space-x-1">
-              <Clock className="w-4 h-4" />
-              <span>{guide.time}</span>
-            </div>
-          </div>
-        </div>
+          </Link>
+        ))}
       </div>
-    </Link>
-  ))}
-</div>
-
     </div>
   );
 }

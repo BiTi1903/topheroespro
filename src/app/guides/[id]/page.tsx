@@ -191,10 +191,7 @@ export default function GuideDetailPage() {
                 <Eye className="w-5 h-5" />
                 <span>{guide.views || "0"} lượt xem</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Clock className="w-5 h-5" />
-                <span>{guide.time || "5 phút đọc"}</span>
-              </div>
+
             </div>
           </div>
         </div>
@@ -204,20 +201,17 @@ export default function GuideDetailPage() {
       <div className="flex-1 w-full max-w-5xl mx-auto px-4 md:px-8 py-12">
         {/* Description - Đóng khung đẹp */}
         {guide.description && guide.description.trim() !== "" && (
-          <div className="relative mb-10 group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-500"></div>
-            <div className="relative bg-white dark:bg-gray-900 rounded-2xl p-8 border border-purple-500/30 shadow-xl">
-              <div className="absolute top-4 left-4 text-purple-500/20 dark:text-purple-400/20">
-                <Quote className="w-8 h-8" />
-              </div>
-              <div className="absolute bottom-4 right-4 text-purple-500/20 dark:text-purple-400/20 rotate-180">
-                <Quote className="w-8 h-8" />
-              </div>
-              <p className="text-gray-800 dark:text-purple-100 text-lg md:text-xl leading-relaxed text-center font-medium whitespace-pre-line px-6 py-2">
-                {guide.description}
-              </p>
-            </div>
-          </div>
+          <div className="flex justify-center mb-6">
+  <div className="relative group inline-block">
+    <div className="absolute -inset-1 bg-gradient-to-r from-purple-100 via-pink-100 to-purple-100 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-500"></div>
+    <div className="relative bg-white dark:bg-gray-900 rounded-2xl px-6 py-3 border border-purple-500/30 shadow">
+      <p className="text-gray-800 dark:text-purple-100 text-base md:text-lg leading-relaxed text-center font-medium whitespace-pre-line">
+        {guide.description}
+      </p>
+    </div>
+  </div>
+</div>
+
         )}
 
         {/* Main Content */}
@@ -244,9 +238,7 @@ export default function GuideDetailPage() {
                   onClick={() => setModalImage(img)}
                   onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
                 />
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white font-semibold text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-                  Click để xem toàn màn hình
-                </div>
+                
               </div>
             ))}
           </div>
@@ -288,9 +280,7 @@ export default function GuideDetailPage() {
                         onClick={() => setModalImage(section.image!)}
                         onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
                       />
-                      <div className="absolute bottom-0 left-0 right-0 p-4 text-white font-semibold text-sm opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 z-20 text-center bg-gradient-to-t from-black/60 to-transparent">
-                        Click để xem toàn màn hình
-                      </div>
+                      
                     </div>
                   )}
                   

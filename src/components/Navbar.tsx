@@ -11,16 +11,16 @@ export default function Navbar() {
       items: [
         { name: "S1", href: "/seasons/s1" },
         { name: "S2", href: "/seasons/s2" },
-        { name: "S3", href: "/seasons/s3" },
+        { name: "S3", href: "/guides/76e9EiC8iwLG4M1DO0Ij" },
       ],
     },
     {
-      name: "Tướng",
+      name: "Anh Hùng",
       items: [
-        { name: "Tất cả", href: "/tuong" },
-        { name: "RPG", href: "/tuong/rpg" },
-        { name: "MOBA", href: "/tuong/moba" },
-        { name: "FPS", href: "/tuong/fps" },
+        { name: "Thức Tỉnh", href: "/guides/RJAJKLFTiN4KPds12YBx" },
+        { name: "Thiên Phú", href: "/tuong/rpg" },
+        { name: "Trang Bị", href: "/tuong/moba" },
+        { name: "", href: "/tuong/fps" },
         { name: "Strategy", href: "/tuong/strategy" },
       ],
     },
@@ -72,42 +72,34 @@ export default function Navbar() {
 
           {/* Menu */}
           <div className="hidden md:flex items-center space-x-6">
-            {menus.map((menu) => (
-              <div key={menu.name} className="relative">
-                <button
-                  onClick={() => toggleDropdown(menu.name)}
-                  className="flex items-center space-x-1 text-purple-300 hover:text-white font-medium transition"
-                >
-                  <span>{menu.name}</span>
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform duration-200 ${
-                      openDropdown === menu.name ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
+  {menus.map((menu) => (
+    <div key={menu.name} className="relative group">
+      {/* Menu button */}
+      <button
+        className="flex items-center space-x-1 text-purple-300 hover:text-white font-medium transition cursor-pointer"
+      >
+        <span>{menu.name}</span>
+        <ChevronDown className="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" />
+      </button>
 
-                {/* Dropdown */}
-                <div
-                  className={`absolute top-full left-0 mt-2 w-40 bg-black/90 backdrop-blur-sm border border-purple-500/30 rounded-md shadow-lg z-50 transition-all duration-200 origin-top ${
-                    openDropdown === menu.name
-                      ? "opacity-100 scale-100 visible"
-                      : "opacity-0 scale-95 invisible"
-                  }`}
-                >
-                  {menu.items.map((item, idx) => (
-                    <Link
-                      key={idx}
-                      href={item.href}
-                      className="block px-4 py-2 text-purple-300 hover:text-white hover:bg-purple-700/30 transition"
-                      onClick={() => setOpenDropdown(null)} // đóng dropdown khi click
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Dropdown */}
+      <div
+        className="absolute top-full left-0 mt-2 w-40 bg-black/90 backdrop-blur-sm border border-purple-500/30 rounded-md shadow-lg z-50 opacity-0 scale-95 invisible group-hover:opacity-100 group-hover:scale-100 group-hover:visible transition-all duration-200 origin-top"
+      >
+        {menu.items.map((item, idx) => (
+          <Link
+            key={idx}
+            href={item.href}
+            className="block px-4 py-2 text-purple-300 hover:text-white hover:bg-purple-700/30 transition cursor-pointer"
+          >
+            {item.name}
+          </Link>
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
+
         </div>
       </div>
     </nav>
