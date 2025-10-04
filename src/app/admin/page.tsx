@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/firebase";
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { User, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, updateDoc, Timestamp } from "firebase/firestore";
 import { Plus, Edit2, Trash2, Eye, LogOut, X, Save, ChevronDown, ChevronUp } from "lucide-react";
 
 interface SubSection {
@@ -28,23 +28,23 @@ interface Guide {
   content: string;
   image: string;
   sections: Section[];
-  createdAt: any;
+  createdAt: Timestamp;
 }
 
 export default function AdminPage() {
-  const [user, setUser] = useState<any>(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [user, setUser] = useState<User | null>(null);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const [guides, setGuides] = useState<Guide[]>([]);
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
   const [editingGuide, setEditingGuide] = useState<Guide | null>(null);
-  const [error, setError] = useState("");
-  
+  const [error, setError] = useState<string>("");
+
   // Form states
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
-  const [image, setImage] = useState("");
+  const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [content, setContent] = useState<string>("");
+  const [image, setImage] = useState<string>("");
   const [sections, setSections] = useState<Section[]>([]);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
@@ -64,7 +64,7 @@ export default function AdminPage() {
   const fetchGuides = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "guides"));
-      const guidesData = querySnapshot.docs.map(doc => {
+      const guidesData: Guide[] = querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -73,16 +73,16 @@ export default function AdminPage() {
           content: data.content || "",
           image: data.image || "",
           sections: data.sections || [],
-          createdAt: data.createdAt
-        } as Guide;
+          createdAt: data.createdAt as Timestamp
+        };
       });
-      setGuides(guidesData.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds));
+      setGuides(guidesData.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds));
     } catch (err) {
       console.error("Lỗi khi lấy bài báo:", err);
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -92,13 +92,13 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogout = async (e: React.MouseEvent) => {
+  const handleLogout = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     await signOut(auth);
     setUser(null);
   };
 
-  const openModal = (e: React.MouseEvent, guide?: Guide) => {
+  const openModal = (e: React.MouseEvent<HTMLButtonElement>, guide?: Guide) => {
     e.stopPropagation();
     if (guide) {
       setEditingGuide(guide);
@@ -120,7 +120,7 @@ export default function AdminPage() {
     setShowModal(true);
   };
 
-  const closeModal = (e?: React.MouseEvent) => {
+  const closeModal = (e?: React.MouseEvent<HTMLButtonElement>) => {
     e?.stopPropagation();
     setShowModal(false);
     setEditingGuide(null);
@@ -132,7 +132,7 @@ export default function AdminPage() {
     setExpandedSections(new Set());
   };
 
-  const addSection = (e: React.MouseEvent) => {
+  const addSection = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     const newSection: Section = {
       id: Date.now().toString(),
@@ -145,13 +145,13 @@ export default function AdminPage() {
     setExpandedSections(new Set([...expandedSections, newSection.id]));
   };
 
-  const updateSection = (sectionId: string, field: keyof Section, value: any) => {
+  const updateSection = (sectionId: string, field: keyof Section, value: string) => {
     setSections(sections.map(section => 
       section.id === sectionId ? { ...section, [field]: value } : section
     ));
   };
 
-  const removeSection = (e: React.MouseEvent, sectionId: string) => {
+  const removeSection = (e: React.MouseEvent<HTMLButtonElement>, sectionId: string) => {
     e.stopPropagation();
     setSections(sections.filter(section => section.id !== sectionId));
     const newExpanded = new Set(expandedSections);
@@ -159,7 +159,7 @@ export default function AdminPage() {
     setExpandedSections(newExpanded);
   };
 
-  const addSubSection = (e: React.MouseEvent, sectionId: string) => {
+  const addSubSection = (e: React.MouseEvent<HTMLButtonElement>, sectionId: string) => {
     e.stopPropagation();
     const newSubSection: SubSection = {
       id: Date.now().toString(),
@@ -174,7 +174,7 @@ export default function AdminPage() {
     ));
   };
 
-  const updateSubSection = (sectionId: string, subSectionId: string, field: keyof SubSection, value: any) => {
+  const updateSubSection = (sectionId: string, subSectionId: string, field: keyof SubSection, value: string) => {
     setSections(sections.map(section => 
       section.id === sectionId 
         ? {
@@ -186,6 +186,7 @@ export default function AdminPage() {
         : section
     ));
   };
+
 
   const removeSubSection = (e: React.MouseEvent, sectionId: string, subSectionId: string) => {
     e.stopPropagation();
