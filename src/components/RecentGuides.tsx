@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Star } from "lucide-react";
-import { collection, query, orderBy, limit, getDocs, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, query, orderBy, limit, getDocs, doc, updateDoc, increment, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase";
 
 interface Guide {
@@ -11,13 +11,13 @@ interface Guide {
   title: string;
   game?: string;
   content?: string;
-  createdAt?: any; // timestamp Firebase
-  views?: number;  // số lượt xem
+  createdAt?: Timestamp;
+  views?: number;
 }
 
 function timeAgo(date: Date) {
   const now = new Date();
-  const diff = now.getTime() - date.getTime(); // milliseconds
+  const diff = now.getTime() - date.getTime();
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
@@ -46,7 +46,8 @@ export default function RecentGuides() {
           const data = docSnap.data();
           guides.push({
             id: docSnap.id,
-            views: Number(data.views || 0), // đảm bảo number
+            views: Number(data.views || 0),
+            createdAt: data.createdAt,
             ...data,
           } as Guide);
         });
@@ -64,7 +65,6 @@ export default function RecentGuides() {
       const guideRef = doc(db, "guides", id);
       await updateDoc(guideRef, { views: increment(1) });
 
-      // Cập nhật local state để tăng lượt xem ngay lập tức
       setRecentGuides(prev =>
         prev.map(g => (g.id === id ? { ...g, views: (g.views || 0) + 1 } : g))
       );
@@ -81,9 +81,7 @@ export default function RecentGuides() {
       </h3>
       <div className="space-y-4">
         {recentGuides.map((guide) => {
-          const createdAt = guide.createdAt
-            ? new Date(guide.createdAt.seconds * 1000)
-            : null;
+          const createdAt = guide.createdAt ? guide.createdAt.toDate() : null;
           const snippet = guide.game
             ? guide.game
             : guide.content
