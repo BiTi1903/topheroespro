@@ -223,13 +223,13 @@ export default function GuideDetailPage() {
           </div>
         )}
 
-        {/* Main Content Images - Grid responsive với ảnh dài tự động thu nhỏ */}
+        {/* Main Content Images - Responsive: 1 ảnh = center, 2+ ảnh = grid */}
         {guide.mainContentImages && guide.mainContentImages.length > 0 && (
-          <div className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className={`mb-10 ${guide.mainContentImages.length === 1 ? 'flex justify-center' : 'grid grid-cols-1 md:grid-cols-2 gap-6'}`}>
             {guide.mainContentImages.map((img, index) => (
               <div 
                 key={index} 
-                className="relative group overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 bg-gray-100 dark:bg-gray-800 flex items-center justify-center min-h-[300px] cursor-pointer"
+                className={`relative group overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 bg-gray-100 dark:bg-gray-800 flex items-center justify-center min-h-[300px] cursor-pointer ${guide.mainContentImages!.length === 1 ? 'max-w-3xl w-full' : ''}`}
                 onClick={() => setModalImage(img)}
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-purple-900/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none"></div>
@@ -273,20 +273,23 @@ export default function GuideDetailPage() {
                     </p>
                   )}
                   
-                  {/* Section Images - Multiple images với grid */}
+                  {/* Section Images - Responsive: 1 ảnh = center, 2+ ảnh = grid */}
                   {section.images && section.images.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                    <div className={`mt-6 ${section.images.length === 1 ? 'flex justify-center' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}`}>
                       {section.images.map((img, imgIdx) => (
-                        <div key={imgIdx} className="relative group/img overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 bg-gray-100 dark:bg-gray-800 flex items-center justify-center min-h-[250px]">
-                          <div className="absolute inset-0 bg-gradient-to-t from-purple-900/50 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 z-10"></div>
+                        <div 
+                          key={imgIdx} 
+                          className={`relative group/img overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 bg-gray-100 dark:bg-gray-800 flex items-center justify-center min-h-[250px] cursor-pointer ${section.images!.length === 1 ? 'max-w-3xl w-full' : ''}`}
+                          onClick={() => setModalImage(img)}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-t from-purple-900/50 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 z-10 pointer-events-none"></div>
                           <img
                             src={img}
                             alt={`${section.title} - Ảnh ${imgIdx + 1}`}
-                            className="w-full h-auto max-h-[500px] object-contain cursor-pointer transform group-hover/img:scale-105 transition-transform duration-500"
-                            onClick={() => setModalImage(img)}
+                            className="w-full h-auto max-h-[500px] object-contain transform group-hover/img:scale-105 transition-transform duration-500 pointer-events-none"
                             onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
                           />
-                          <div className="absolute bottom-0 left-0 right-0 p-3 text-white font-semibold text-xs opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 z-20 text-center bg-gradient-to-t from-black/60 to-transparent">
+                          <div className="absolute bottom-0 left-0 right-0 p-3 text-white font-semibold text-xs opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 z-20 text-center bg-gradient-to-t from-black/60 to-transparent pointer-events-none">
                             Click để xem toàn màn hình
                           </div>
                         </div>
@@ -310,20 +313,23 @@ export default function GuideDetailPage() {
                             </p>
                           )}
                           
-                          {/* SubSection Images - Multiple images */}
+                          {/* SubSection Images - Responsive: 1 ảnh = center, 2+ ảnh = grid */}
                           {sub.images && sub.images.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                            <div className={`mt-4 ${sub.images.length === 1 ? 'flex justify-center' : 'grid grid-cols-1 md:grid-cols-2 gap-3'}`}>
                               {sub.images.map((img, imgIdx) => (
-                                <div key={imgIdx} className="relative group/subimg overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 bg-gray-100 dark:bg-gray-800 flex items-center justify-center min-h-[200px]">
-                                  <div className="absolute inset-0 bg-gradient-to-t from-purple-900/50 via-transparent to-transparent opacity-0 group-hover/subimg:opacity-100 transition-opacity duration-300 z-10"></div>
+                                <div 
+                                  key={imgIdx} 
+                                  className={`relative group/subimg overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 bg-gray-100 dark:bg-gray-800 flex items-center justify-center min-h-[200px] cursor-pointer ${sub.images!.length === 1 ? 'max-w-2xl w-full' : ''}`}
+                                  onClick={() => setModalImage(img)}
+                                >
+                                  <div className="absolute inset-0 bg-gradient-to-t from-purple-900/50 via-transparent to-transparent opacity-0 group-hover/subimg:opacity-100 transition-opacity duration-300 z-10 pointer-events-none"></div>
                                   <img
                                     src={img}
                                     alt={`${sub.title} - Ảnh ${imgIdx + 1}`}
-                                    className="w-full h-auto max-h-[400px] object-contain cursor-pointer transform group-hover/subimg:scale-105 transition-transform duration-500"
-                                    onClick={() => setModalImage(img)}
+                                    className="w-full h-auto max-h-[400px] object-contain transform group-hover/subimg:scale-105 transition-transform duration-500 pointer-events-none"
                                     onError={(e) => (e.currentTarget.src = "/fallback-image.jpg")}
                                   />
-                                  <div className="absolute bottom-0 left-0 right-0 p-2 text-white font-semibold text-xs opacity-0 group-hover/subimg:opacity-100 transition-opacity duration-300 z-20 text-center bg-gradient-to-t from-black/60 to-transparent">
+                                  <div className="absolute bottom-0 left-0 right-0 p-2 text-white font-semibold text-xs opacity-0 group-hover/subimg:opacity-100 transition-opacity duration-300 z-20 text-center bg-gradient-to-t from-black/60 to-transparent pointer-events-none">
                                     Click để xem toàn màn hình
                                   </div>
                                 </div>
@@ -366,9 +372,7 @@ export default function GuideDetailPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/70 text-sm bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm">
-              Click vào nền hoặc nút X để đóng
-            </div>
+
           </div>
         </div>
       )}

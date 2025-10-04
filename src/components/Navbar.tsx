@@ -27,7 +27,7 @@ export default function Navbar() {
     {
       name: "Lỗi thường gặp",
       items: [
-        { name: "Lỗi mất tài khoản", href: "/" },
+        { name: "Lỗi mất tài khoản", href: "/guides/Ik9Mi3LgfMN4USJITBY0" },
         { name: "Lỗi game", href: "/" },
       ],
     },
