@@ -2,14 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/firebase";
-import { User, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, updateDoc, Timestamp } from "firebase/firestore";
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { Plus, Edit2, Trash2, Eye, LogOut, X, Save, ChevronDown, ChevronUp } from "lucide-react";
-import dynamic from "next/dynamic";
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
-
-
 
 interface SubSection {
   id: string;
@@ -33,23 +28,23 @@ interface Guide {
   content: string;
   image: string;
   sections: Section[];
-  createdAt: Timestamp;
+  createdAt: any;
 }
 
 export default function AdminPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const [user, setUser] = useState<any>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [guides, setGuides] = useState<Guide[]>([]);
-  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState(false);
   const [editingGuide, setEditingGuide] = useState<Guide | null>(null);
-  const [error, setError] = useState<string>("");
-
+  const [error, setError] = useState("");
+  
   // Form states
-  const [title, setTitle] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [content, setContent] = useState<string>("");
-  const [image, setImage] = useState<string>("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
+  const [image, setImage] = useState("");
   const [sections, setSections] = useState<Section[]>([]);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
@@ -69,7 +64,7 @@ export default function AdminPage() {
   const fetchGuides = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "guides"));
-      const guidesData: Guide[] = querySnapshot.docs.map(doc => {
+      const guidesData = querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -78,16 +73,16 @@ export default function AdminPage() {
           content: data.content || "",
           image: data.image || "",
           sections: data.sections || [],
-          createdAt: data.createdAt as Timestamp
-        };
+          createdAt: data.createdAt
+        } as Guide;
       });
-      setGuides(guidesData.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds));
+      setGuides(guidesData.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds));
     } catch (err) {
       console.error("Lỗi khi lấy bài báo:", err);
     }
   };
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -97,13 +92,13 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogout = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleLogout = async (e: React.MouseEvent) => {
     e.stopPropagation();
     await signOut(auth);
     setUser(null);
   };
 
-  const openModal = (e: React.MouseEvent<HTMLButtonElement>, guide?: Guide) => {
+  const openModal = (e: React.MouseEvent, guide?: Guide) => {
     e.stopPropagation();
     if (guide) {
       setEditingGuide(guide);
@@ -125,7 +120,7 @@ export default function AdminPage() {
     setShowModal(true);
   };
 
-  const closeModal = (e?: React.MouseEvent<HTMLButtonElement>) => {
+  const closeModal = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     setShowModal(false);
     setEditingGuide(null);
@@ -137,7 +132,7 @@ export default function AdminPage() {
     setExpandedSections(new Set());
   };
 
-  const addSection = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const addSection = (e: React.MouseEvent) => {
     e.stopPropagation();
     const newSection: Section = {
       id: Date.now().toString(),
@@ -150,13 +145,13 @@ export default function AdminPage() {
     setExpandedSections(new Set([...expandedSections, newSection.id]));
   };
 
-  const updateSection = (sectionId: string, field: keyof Section, value: string) => {
+  const updateSection = (sectionId: string, field: keyof Section, value: any) => {
     setSections(sections.map(section => 
       section.id === sectionId ? { ...section, [field]: value } : section
     ));
   };
 
-  const removeSection = (e: React.MouseEvent<HTMLButtonElement>, sectionId: string) => {
+  const removeSection = (e: React.MouseEvent, sectionId: string) => {
     e.stopPropagation();
     setSections(sections.filter(section => section.id !== sectionId));
     const newExpanded = new Set(expandedSections);
@@ -164,7 +159,7 @@ export default function AdminPage() {
     setExpandedSections(newExpanded);
   };
 
-  const addSubSection = (e: React.MouseEvent<HTMLButtonElement>, sectionId: string) => {
+  const addSubSection = (e: React.MouseEvent, sectionId: string) => {
     e.stopPropagation();
     const newSubSection: SubSection = {
       id: Date.now().toString(),
@@ -179,7 +174,7 @@ export default function AdminPage() {
     ));
   };
 
-  const updateSubSection = (sectionId: string, subSectionId: string, field: keyof SubSection, value: string) => {
+  const updateSubSection = (sectionId: string, subSectionId: string, field: keyof SubSection, value: any) => {
     setSections(sections.map(section => 
       section.id === sectionId 
         ? {
@@ -191,8 +186,6 @@ export default function AdminPage() {
         : section
     ));
   };
-
-
 
   const removeSubSection = (e: React.MouseEvent, sectionId: string, subSectionId: string) => {
     e.stopPropagation();
@@ -475,10 +468,10 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block text-purple-300 mb-2 text-sm font-semibold">Nội dung tổng quan</label>
-                  <ReactQuill
+                  <textarea
                     placeholder="Nhập nội dung tổng quan của bài viết..."
                     value={content}
-                    onChange={setContent}
+                    onChange={e => setContent(e.target.value)}
                     className="w-full p-3 rounded-lg bg-gray-800/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition h-32 resize-none"
                   />
                 </div>
@@ -565,13 +558,15 @@ export default function AdminPage() {
                           />
                         </div>
 
-                        <ReactQuill
-  placeholder="Nhập nội dung của mục này..."
-  value={section.content}
-  onChange={(value) => updateSection(section.id, 'content', value)}
-  className="w-full p-3 rounded-lg bg-gray-800/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition h-24"
-/>
-
+                        <div>
+                          <label className="block text-purple-300 mb-2 text-sm font-semibold">Nội dung</label>
+                          <textarea
+                            placeholder="Nhập nội dung của mục này..."
+                            value={section.content}
+                            onChange={e => updateSection(section.id, 'content', e.target.value)}
+                            className="w-full p-3 rounded-lg bg-gray-800/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition h-24 resize-none"
+                          />
+                        </div>
 
                         <div>
                           <label className="block text-purple-300 mb-2 text-sm font-semibold">URL ảnh (tùy chọn)</label>
@@ -629,13 +624,12 @@ export default function AdminPage() {
                                 className="w-full p-2 rounded-lg bg-gray-700/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition text-sm"
                               />
 
-                              <ReactQuill
-  placeholder="Nội dung mục con..."
-  value={subSection.content}
-  onChange={(value) => updateSubSection(section.id, subSection.id, 'content', value)}
-  className="w-full p-2 rounded-lg bg-gray-700/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition h-20 text-sm"
-/>
-
+                              <textarea
+                                placeholder="Nội dung mục con..."
+                                value={subSection.content}
+                                onChange={e => updateSubSection(section.id, subSection.id, 'content', e.target.value)}
+                                className="w-full p-2 rounded-lg bg-gray-700/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition h-20 resize-none text-sm"
+                              />
 
                               <input
                                 type="text"
