@@ -10,7 +10,7 @@ export default function Hero() {
           </span>
         </h1>
         <p className="text-xl text-purple-200 mb-8">
-          Hướng dẫn từ cơ bản đến nâng cao cho mọi game thủ
+          Hướng dẫn từ cơ bản đến nâng cao cho mọi game th
         </p>
         <div className="flex items-center justify-center space-x-4">
           <a

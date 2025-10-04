@@ -5,6 +5,11 @@ import { auth, db } from "@/firebase";
 import { User, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, updateDoc, Timestamp } from "firebase/firestore";
 import { Plus, Edit2, Trash2, Eye, LogOut, X, Save, ChevronDown, ChevronUp } from "lucide-react";
+import dynamic from "next/dynamic";
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+import "react-quill/dist/quill.snow.css";
+
+
 
 interface SubSection {
   id: string;
@@ -470,10 +475,10 @@ export default function AdminPage() {
 
                 <div>
                   <label className="block text-purple-300 mb-2 text-sm font-semibold">Nội dung tổng quan</label>
-                  <textarea
+                  <ReactQuill
                     placeholder="Nhập nội dung tổng quan của bài viết..."
                     value={content}
-                    onChange={e => setContent(e.target.value)}
+                    onChange={setContent}
                     className="w-full p-3 rounded-lg bg-gray-800/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition h-32 resize-none"
                   />
                 </div>
@@ -560,15 +565,13 @@ export default function AdminPage() {
                           />
                         </div>
 
-                        <div>
-                          <label className="block text-purple-300 mb-2 text-sm font-semibold">Nội dung</label>
-                          <textarea
-                            placeholder="Nhập nội dung của mục này..."
-                            value={section.content}
-                            onChange={e => updateSection(section.id, 'content', e.target.value)}
-                            className="w-full p-3 rounded-lg bg-gray-800/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition h-24 resize-none"
-                          />
-                        </div>
+                        <ReactQuill
+  placeholder="Nhập nội dung của mục này..."
+  value={section.content}
+  onChange={(value) => updateSection(section.id, 'content', value)}
+  className="w-full p-3 rounded-lg bg-gray-800/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition h-24"
+/>
+
 
                         <div>
                           <label className="block text-purple-300 mb-2 text-sm font-semibold">URL ảnh (tùy chọn)</label>
@@ -626,12 +629,13 @@ export default function AdminPage() {
                                 className="w-full p-2 rounded-lg bg-gray-700/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition text-sm"
                               />
 
-                              <textarea
-                                placeholder="Nội dung mục con..."
-                                value={subSection.content}
-                                onChange={e => updateSubSection(section.id, subSection.id, 'content', e.target.value)}
-                                className="w-full p-2 rounded-lg bg-gray-700/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition h-20 resize-none text-sm"
-                              />
+                              <ReactQuill
+  placeholder="Nội dung mục con..."
+  value={subSection.content}
+  onChange={(value) => updateSubSection(section.id, subSection.id, 'content', value)}
+  className="w-full p-2 rounded-lg bg-gray-700/50 border border-purple-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition h-20 text-sm"
+/>
+
 
                               <input
                                 type="text"
