@@ -213,12 +213,13 @@ export default function GuideDetailPage() {
 <div className="flex-1 w-full max-w-5xl mx-auto px-4 md:px-8 py-12">
   {/* Description */}
   {guide.description && (
-    <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-2xl p-6 mb-8">
-      <p className="text-lg text-purple-100 leading-relaxed italic whitespace-pre-line">
-        "{guide.description}"
-      </p>
-    </div>
-  )}
+  <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-2xl p-6 mb-8">
+    <p className="text-lg text-purple-100 leading-relaxed italic whitespace-pre-line">
+      {`"${guide.description}"`}
+    </p>
+  </div>
+)}
+
 
           {/* Main Content */}
   <article className="prose prose-invert prose-lg max-w-none">
