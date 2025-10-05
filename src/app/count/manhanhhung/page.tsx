@@ -40,12 +40,12 @@ export default function HeroFragmentCalculator() {
     { value: 'red-3', label: 'Đỏ 3 sao', order: 9, color: 'red' },
     { value: 'red-4', label: 'Đỏ 4 sao', order: 10, color: 'red' },
     { value: 'red-5', label: 'Đỏ 5 sao', order: 11, color: 'red' },
-    { value: 'white-0', label: 'Trắng 0 sao', order: 12, color: 'white' },
-    { value: 'white-1', label: 'Trắng 1 sao', order: 13, color: 'white' },
-    { value: 'white-2', label: 'Trắng 2 sao', order: 14, color: 'white' },
-    { value: 'white-3', label: 'Trắng 3 sao', order: 15, color: 'white' },
-    { value: 'white-4', label: 'Trắng 4 sao', order: 16, color: 'white' },
-    { value: 'white-5', label: 'Trắng 5 sao', order: 17, color: 'white' },
+    { value: 'white-0', label: 'Bạc 0 sao', order: 12, color: 'white' },
+    { value: 'white-1', label: 'Bạc 1 sao', order: 13, color: 'white' },
+    { value: 'white-2', label: 'Bạc 2 sao', order: 14, color: 'white' },
+    { value: 'white-3', label: 'Bạc 3 sao', order: 15, color: 'white' },
+    { value: 'white-4', label: 'Bạc 4 sao', order: 16, color: 'white' },
+    { value: 'white-5', label: 'Bạc 5 sao', order: 17, color: 'white' },
   ];
 
   const calculateFragments = () => {
@@ -314,7 +314,7 @@ export default function HeroFragmentCalculator() {
                 : 'bg-white/5 border-gray-500/20'
             }`}>
               <div className={`text-xs mb-1 ${result.white > 0 ? 'text-white/80' : 'text-gray-400'}`}>
-                Mảnh Trắng
+                Mảnh Bạc
               </div>
               <div className={`text-2xl font-bold ${result.white > 0 ? 'text-white' : 'text-gray-500'}`}>
                 {result.white}
@@ -360,7 +360,7 @@ export default function HeroFragmentCalculator() {
               </div>
             </div>
             <div className="bg-white/10 rounded-lg p-3 border border-white/20">
-              <div className="text-white font-bold mb-2 text-center">⚪ Trắng</div>
+              <div className="text-white font-bold mb-2 text-center">⚪ Bạc</div>
               <div className="text-white/90 space-y-1">
                 {fragments.white.map((val, i) => (
                   <div key={i} className="flex justify-between">

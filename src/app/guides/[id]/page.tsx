@@ -236,10 +236,9 @@ export default function GuideDetailPage() {
         )}
 
         {/* Hero Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 z-10">
+        <div className="absolute bottom-0 left-0 right-0 p-8 md:p-4 z-10">
           <div className="max-w-5xl mx-auto">
             <div className="space-y-6">
-              {/* Game Title */}
               
 
               {/* Main Title */}
@@ -291,7 +290,7 @@ export default function GuideDetailPage() {
 
         {/* Main Content Card */}
         {guide.content && guide.content.trim() !== "" && (
-          <div className="mb-16">
+          <div className="mb-6">
             <div className="relative group max-w-5xl mx-auto">
               {/* Glow Effect */}
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
@@ -322,7 +321,7 @@ export default function GuideDetailPage() {
 
         {/* Enhanced Main Content Images */}
         {guide.mainContentImages && guide.mainContentImages.length > 0 && (
-          <div className="mb-16">
+          <div className="mb-6">
             
             
             <div className={`${guide.mainContentImages.length === 1 ? 'flex justify-center' : 'grid grid-cols-1 md:grid-cols-2 gap-8'}`}>
@@ -336,7 +335,7 @@ export default function GuideDetailPage() {
                   <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-2xl blur opacity-0 group-hover:opacity-20 transition duration-500"></div>
                   
                   {/* Image Container */}
-                  <div className="relative z-10 w-full h-full flex items-center justify-center p-4">
+                  <div className="relative z-10 w-full h-full flex items-center justify-center p-2">
                     <img
                       src={img}
                       alt={`${guide.title} - Ảnh ${index + 1}`}
@@ -370,7 +369,7 @@ export default function GuideDetailPage() {
 
         {/* Enhanced Sections */}
         {guide.sections && guide.sections.length > 0 && (
-          <div className="space-y-16 mt-16">
+          <div className="space-y-16 mt-6">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-purple-600 dark:text-purple-300 mb-4">Chi tiết</h2>
               <div className="w-32 h-1 bg-gradient-to-r from-purple-600 to-pink-600 mx-auto rounded-full"></div>

@@ -9,8 +9,8 @@ export default function Navbar() {
     {
   name: "Tính toán",
   items: [
-    { name: "Tính số tiền đã nạp", href: "/guides/Ik9Mi3LgfMN4USJITBY0" },
-    { name: "Tính mảnh anh hùng", href: "/count" },
+    { name: "Tính số tiền đã nạp", href: "/count/pay/" },
+    { name: "Tính mảnh anh hùng", href: "/count/manhanhhung/" },
   ],
 },
 
@@ -27,7 +27,7 @@ export default function Navbar() {
       items: [
         { name: "Thức Tỉnh", href: "/guides/RJAJKLFTiN4KPds12YBx" },
         { name: "Thiên Phú", href: "/tuong/rpg" },
-        { name: "Trang Bị", href: "/tuong/moba" },
+        { name: "Trang Bị", href: "/guides/OhCEUvncN1wkiWqiBJRJ" },
         { name: "Chiến Thuật", href: "/tuong/strategy" },
       ],
     },
