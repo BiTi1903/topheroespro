@@ -9,7 +9,7 @@ export default function Navbar() {
     {
   name: "Tính toán",
   items: [
-    { name: "Tính điểm sự kiện", href: "/guides/Ik9Mi3LgfMN4USJITBY0" },
+    { name: "Tính số tiền đã nạp", href: "/guides/Ik9Mi3LgfMN4USJITBY0" },
     { name: "Tính mảnh anh hùng", href: "/count" },
   ],
 },

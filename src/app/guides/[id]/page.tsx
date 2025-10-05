@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase";
 import { ChevronLeft, Eye, Clock, Quote, BookOpen, Star, Share2, Bookmark } from "lucide-react";
+import RelatedGuidesSidebar from "../../../components/RelatedGuidesSidebar ";
+
 
 interface SubSection {
   id: string;
@@ -309,6 +311,12 @@ export default function GuideDetailPage() {
                 </div>
               </div>
             </div>
+            {guide && guide.category && (
+  <RelatedGuidesSidebar 
+    currentGuideId={guide.id} 
+    category={guide.category} 
+  />
+)}
           </div>
         )}
 
