@@ -146,7 +146,7 @@ const specialItemName = specialItems[selectedChest];
     }
   }
 
-  let resultArray: ResultItem[] = Object.entries(itemCounts)
+const resultArray: ResultItem[] = Object.entries(itemCounts)
     .map(([name, count]) => ({
       name,
       count,
