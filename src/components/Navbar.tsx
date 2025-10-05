@@ -7,6 +7,14 @@ import { Gamepad2, ChevronDown, Menu, X } from "lucide-react";
 export default function Navbar() {
   const menus = [
     {
+  name: "Tính toán",
+  items: [
+    { name: "Tính điểm sự kiện", href: "/guides/Ik9Mi3LgfMN4USJITBY0" },
+    { name: "Tính mảnh anh hùng", href: "/count" },
+  ],
+},
+
+    {
       name: "Mùa giải",
       items: [
         { name: "S1", href: "/seasons/s1" },

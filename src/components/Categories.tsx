@@ -54,34 +54,36 @@ export default function Categories({ onCategoryChange }: CategoriesProps) {
 
   return (
     <div className="relative z-10 py-4 mt-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex items-center space-x-2 overflow-x-auto">
-        <button
-          onClick={() => handleClick("all")}
-          className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition whitespace-nowrap ${
-            activeCategory === "all"
-              ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50"
-              : "bg-white/10 text-purple-300 hover:bg-white/20 border border-purple-500/30"
-          }`}
-        >
-          <Icons.Grid3X3 className="w-5 h-5" />
-          <span>Nổi bật</span>
-        </button>
+  <div className="flex items-center space-x-2 overflow-x-auto pb-2 mb-4">
+    <button
+      onClick={() => handleClick("all")}
+      className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-all duration-200 ease-out transform cursor-pointer whitespace-nowrap ${
+        activeCategory === "all"
+          ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50 scale-105"
+          : "bg-white/10 text-purple-300 hover:bg-white/20 hover:scale-105 hover:shadow-md border border-purple-500/30"
+      } active:scale-95`}
+    >
+      <Icons.Grid3X3 className="w-5 h-5" />
+      <span>{activeCategory === "all" ? "🔥  Nổi bật" : "🔥  Nổi bật"}</span>
+    </button>
 
-        {categories.map(category => (
-          <button
-            key={category.id}
-            onClick={() => handleClick(category.name)}
-            className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition whitespace-nowrap ${
-              activeCategory === category.name
-                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50"
-                : "bg-white/10 text-purple-300 hover:bg-white/20 border border-purple-500/30"
-            }`}
-          >
-            <Icons.Tag className="w-5 h-5" />
-            <span>{category.name}</span>
-          </button>
-        ))}
-      </div>
-    </div>
+    {categories.map(category => (
+      <button
+        key={category.id}
+        onClick={() => handleClick(category.name)}
+        className={`flex items-center space-x-2 px-6 py-2 rounded-lg font-medium transition-all duration-200 ease-out transform cursor-pointer whitespace-nowrap ${
+          activeCategory === category.name
+            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/50 scale-105"
+            : "bg-white/10 text-purple-300 hover:bg-white/20 hover:scale-105 hover:shadow-md border border-purple-500/30"
+        } active:scale-95`}
+      >
+        <Icons.Tag className="w-5 h-5" />
+        <span>{category.name}</span>
+      </button>
+    ))}
+  </div>
+</div>
+
+
   );
 }
