@@ -32,6 +32,9 @@ const ChestSimulator: React.FC = () => {
   fortress: '999 vé',
 };
 
+const [isSpinning, setIsSpinning] = useState(false);
+
+
 const specialItemName = specialItems[selectedChest];
 
   const chestData: Record<'fortress' | 'silver' | 'gold', Chest> = {
@@ -130,13 +133,12 @@ const specialItemName = specialItems[selectedChest];
   const simulateOpening = () => {
   const chest = chestData[selectedChest];
   const itemCounts: Record<string, number> = {};
-  
   const totalRate = chest.items.reduce((sum, item) => sum + item.rate, 0);
 
+  // Sinh kết quả ngẫu nhiên
   for (let i = 0; i < quantity; i++) {
     const roll = Math.random() * totalRate;
     let cumulative = 0;
-
     for (const item of chest.items) {
       cumulative += item.rate;
       if (roll <= cumulative) {
@@ -146,26 +148,35 @@ const specialItemName = specialItems[selectedChest];
     }
   }
 
-const resultArray: ResultItem[] = Object.entries(itemCounts)
-    .map(([name, count]) => ({
-      name,
-      count,
-      rate: chest.items.find(i => i.name === name)?.rate || 0
-    }));
+  const finalResults: ResultItem[] = Object.entries(itemCounts).map(([name, count]) => ({
+    name,
+    count,
+    rate: chest.items.find(i => i.name === name)?.rate || 0
+  }));
 
-  // Đưa vật phẩm hiếm (rate <1) lên đầu
-  resultArray.sort((a, b) => {
+  // Đưa vật phẩm hiếm lên đầu
+  finalResults.sort((a, b) => {
     if (a.rate < 1 && b.rate >= 1) return -1;
     if (b.rate < 1 && a.rate >= 1) return 1;
     return b.count - a.count;
   });
 
-  setResults(resultArray);
+  // ---- EFFECT: Quay rương trước khi hiện kết quả ----
   setShowModal(true);
+  setResults([]); // reset hiển thị trước
+  let index = 0;
 
-  if (itemCounts[specialItemName]) setSpecialEffect('fireworks');
-  else setSpecialEffect('sad');
+  const rollInterval = setInterval(() => {
+    setResults(finalResults.slice(0, index + 1)); // hiện dần kết quả
+    index++;
+    if (index >= finalResults.length) {
+      clearInterval(rollInterval);
+      if (itemCounts[specialItemName]) setSpecialEffect('fireworks');
+      else setSpecialEffect('sad');
+    }
+  }, 200); // 150ms cho mỗi vật phẩm, tạo hiệu ứng quay
 };
+
 
 
   const getRarityColor = (itemName: string, rate: number) => {
@@ -193,6 +204,8 @@ const resultArray: ResultItem[] = Object.entries(itemCounts)
   .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
   .animate-scaleIn { animation: scaleIn 0.4s ease-out; }
   .animate-blink-slow { animation: blinkSlow 1.5s infinite; }
+  }
+
 `}</style>
 
 
