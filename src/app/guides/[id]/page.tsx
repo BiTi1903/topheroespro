@@ -178,7 +178,7 @@ export default function GuideDetailPage() {
 
 
       {/* Hero Section */}
-      <div className="relative h-[70vh] w-full overflow-hidden">
+      <div className="relative h-[75vh] w-full overflow-hidden">
         {/* Background Image with Parallax Effect */}
         <div className="absolute inset-0">
           <img

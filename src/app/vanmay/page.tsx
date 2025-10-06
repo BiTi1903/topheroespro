@@ -244,7 +244,7 @@ const specialItemName = specialItems[selectedChest];
               : '/images/vanmay/ruongtrangtriskinphaodai.png'
           }
           alt={chest.name}
-          className="w-20 h-20 object-contain"
+          className="w-10 h-10 object-contain"
         />
       </div>
       <h3 className="text-xl font-bold text-white text-center">{chest.name}</h3>
@@ -340,7 +340,7 @@ const specialItemName = specialItems[selectedChest];
           <img
             src={itemData?.image || '/images/vanmay/default.png'}
             alt={item.name}
-            className="w-14 h-14 object-contain rounded-md"
+            className="w-10 h-10 object-contain rounded-md"
           />
         </div>
 
@@ -401,7 +401,7 @@ const specialItemName = specialItems[selectedChest];
         <img 
           src={item.image} // <-- bạn cần thêm trường image vào chestData
           alt={item.name} 
-          className="w-12 h-12 object-contain rounded-md" 
+          className="w-10 h-10 object-contain rounded-md" 
         />
 
         <div className="flex-1">

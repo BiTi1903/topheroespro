@@ -52,7 +52,7 @@ export default function RechargeCalculator() {
           <div className="flex items-center justify-center space-x-2 mb-3">
             <Sparkles className="w-8 h-8 text-yellow-400" />
             <h1 className="text-3xl md:text-4xl font-bold text-white">
-              Tính Tiền Theo Cấp VIP
+              Tính Tiền Theo Điểm Vip
             </h1>
             <Sparkles className="w-8 h-8 text-yellow-400" />
           </div>
@@ -82,7 +82,7 @@ export default function RechargeCalculator() {
           {/* Input Section */}
           <div className="mb-6">
             <label className="block text-white font-semibold mb-3 text-lg">
-              <Gem className="inline w-5 h-5 mb-1" /> Số điểm hiện tại
+              <Gem className="inline w-5 h-5 mb-1" /> Số điểm Vip hiện tại của bạn
             </label>
             <input
               type="number"
@@ -156,7 +156,7 @@ Lưu ý          </div>
               <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
               <div>
                 <span className="font-semibold">
-                  Số tiền hiển thị chỉ mang tính chất tham khảo (~90% chính xác).
+                  Số tiền hiển thị chỉ mang tính chất tham khảo (80-90%).
                 </span>
               </div>
             </div>

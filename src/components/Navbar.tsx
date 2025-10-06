@@ -10,7 +10,10 @@ export default function Navbar() {
   name: "Tính toán",
   items: [
     { name: "Tính số tiền đã nạp", href: "/count/pay/" },
-    { name: "Tính mảnh anh hùng", href: "/count/manhanhhung/" },
+    { name: "Tính mảnh nâng cấp tướng", href: "/count/manhanhhung/" },
+    { name: "Tính mảnh trang bị độc quyền", href: "/count/manhtrangbidocquyen/" },
+    { name: "Tính tài nguyên nâng trang bị tướng", href: "/count/trangbianhhung/" },
+
   ],
 },
 
