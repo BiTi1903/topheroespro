@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { auth, db } from "@/firebase";
+import { auth, db, storage } from "@/firebase";
 import { User, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, updateDoc, Timestamp, query, orderBy } from "firebase/firestore";
-import { Plus, Edit2, Trash2, Eye, LogOut, X, Save, ChevronDown, ChevronUp, Tag, Settings } from "lucide-react";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { Plus, Edit2, Trash2, LogOut, X, Save, ChevronDown, ChevronUp, Tag, Settings, Upload, Image as ImageIcon } from "lucide-react";
 
 interface SubSection {
   id: string;
@@ -51,6 +52,7 @@ export default function AdminPage() {
   const [showCategoryModal, setShowCategoryModal] = useState<boolean>(false);
   const [editingGuide, setEditingGuide] = useState<Guide | null>(null);
   const [error, setError] = useState<string>("");
+  const [uploading, setUploading] = useState<boolean>(false);
 
   // Form states
   const [title, setTitle] = useState<string>("");
@@ -66,6 +68,80 @@ export default function AdminPage() {
 
   // Category management states
   const [newCategoryName, setNewCategoryName] = useState<string>("");
+
+  // Helper: Upload image to Firebase Storage
+  const uploadImage = async (file: File, path: string): Promise<string> => {
+  try {
+    setUploading(true);
+    const timestamp = Date.now();
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const fileName = `${path}/${timestamp}_${sanitizedFileName}`;
+    const storageRef = ref(storage, fileName);
+    
+    // Upload file với metadata
+    const metadata = {
+      contentType: file.type,
+      customMetadata: {
+        uploadedBy: auth.currentUser?.email || 'unknown',
+        uploadedAt: new Date().toISOString()
+      }
+    };
+    
+    const uploadResult = await uploadBytes(storageRef, file, metadata);
+    console.log('Upload success:', uploadResult);
+    
+    // Lấy download URL
+    const downloadURL = await getDownloadURL(uploadResult.ref);
+    console.log('Download URL:', downloadURL);
+    
+    return downloadURL;
+  } catch (error: any) {
+    console.error("Upload error details:", error);
+    
+    // Xử lý các loại lỗi cụ thể
+    if (error.code === 'storage/unauthorized') {
+      alert('Lỗi: Không có quyền upload. Vui lòng đăng nhập lại!');
+    } else if (error.code === 'storage/canceled') {
+      alert('Upload đã bị hủy');
+    } else if (error.code === 'storage/unknown') {
+      alert('Lỗi không xác định. Vui lòng kiểm tra kết nối internet!');
+    } else {
+      alert('Lỗi khi upload ảnh: ' + error.message);
+    }
+    
+    throw error;
+  } finally {
+    setUploading(false);
+  }
+};
+
+  // Helper: Handle file input change
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    callback: (url: string) => void,
+    path: string
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file ảnh!');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File quá lớn! Tối đa 5MB');
+      return;
+    }
+
+    try {
+      const url = await uploadImage(file, path);
+      callback(url);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -148,12 +224,21 @@ export default function AdminPage() {
     if (!newCategoryName.trim()) return;
     
     try {
-      await addDoc(collection(db, "categories"), {
+      const docRef = await addDoc(collection(db, "categories"), {
         name: newCategoryName.trim(),
         createdAt: serverTimestamp(),
       });
+      
+      setCategories(prev => [
+        ...prev,
+        {
+          id: docRef.id,
+          name: newCategoryName.trim(),
+          createdAt: Timestamp.now(),
+        } as Category
+      ]);
+      
       setNewCategoryName("");
-      fetchCategories();
       alert("Thêm danh mục thành công!");
     } catch (err) {
       console.error(err);
@@ -163,11 +248,11 @@ export default function AdminPage() {
 
   const deleteCategory = async (e: React.MouseEvent<HTMLButtonElement>, categoryId: string) => {
     e.stopPropagation();
-    if (!confirm("Bạn có chắc muốn xóa danh mục này? Tất cả bài viết trong danh mục này sẽ không còn danh mục.")) return;
+    if (!confirm("Bạn có chắc muốn xóa danh mục này?")) return;
     
     try {
       await deleteDoc(doc(db, "categories", categoryId));
-      fetchCategories();
+      setCategories(prev => prev.filter(c => c.id !== categoryId));
       alert("Xóa danh mục thành công!");
     } catch (err) {
       console.error(err);
@@ -219,22 +304,6 @@ export default function AdminPage() {
     setPinned(false);
     setSelectedCategory("");
     setGame("");
-  };
-
-  const addImageToMainContent = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    setMainContentImages([...mainContentImages, ""]);
-  };
-
-  const updateMainContentImage = (index: number, value: string) => {
-    const newImages = [...mainContentImages];
-    newImages[index] = value;
-    setMainContentImages(newImages);
-  };
-
-  const removeMainContentImage = (e: React.MouseEvent<HTMLButtonElement>, index: number) => {
-    e.stopPropagation();
-    setMainContentImages(mainContentImages.filter((_, i) => i !== index));
   };
 
   const addSection = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -494,6 +563,15 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6">
+      {uploading && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
+          <div className="bg-gray-900 p-8 rounded-2xl text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-500 mx-auto mb-4"></div>
+            <p className="text-lg">Đang upload ảnh...</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Quản lý Bài Viết</h1>
         <div className="flex space-x-3">
@@ -556,17 +634,45 @@ export default function AdminPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded-2xl w-full max-w-3xl overflow-y-auto max-h-[90vh] relative">
-            <button onClick={closeModal} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 overflow-y-auto">
+          <div className="bg-gray-900 p-6 rounded-2xl w-full max-w-3xl my-8 mx-4 max-h-[90vh] overflow-y-auto relative">
+            <button onClick={closeModal} className="absolute top-4 right-4 text-gray-400 hover:text-white sticky top-0 z-10 bg-gray-900 p-2 rounded-lg">
               <X size={24} />
             </button>
             <h2 className="text-2xl font-bold mb-4">{editingGuide ? "Sửa Bài" : "Thêm Bài Mới"}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <input type="text" placeholder="Tiêu đề" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700" />
-              <input type="text" placeholder="Mô tả" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700" />
-              <textarea placeholder="Nội dung chính" value={content} onChange={(e) => setContent(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700"></textarea>
-              <input type="text" placeholder="Link ảnh đại diện" value={image} onChange={(e) => setImage(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700" />
+              <input type="text" placeholder="Tiêu đề" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700" required />
+              <input type="text" placeholder="Mô tả" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700" required />
+              <textarea placeholder="Nội dung chính" value={content} onChange={(e) => setContent(e.target.value)} className="w-full p-3 rounded-lg bg-gray-800 border border-gray-700 min-h-[100px]" required></textarea>
+              
+              {/* Main Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Ảnh đại diện</label>
+                <div className="flex items-center space-x-3">
+                  <label className="flex-1 flex items-center justify-center px-4 py-3 bg-gray-800 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer hover:border-purple-500 transition">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleFileChange(e, setImage, 'guides/main')}
+                    />
+                    <Upload className="w-5 h-5 mr-2" />
+                    <span>{image ? 'Thay ảnh' : 'Upload ảnh'}</span>
+                  </label>
+                  {image && (
+                    <div className="relative w-20 h-20">
+                      <img src={image} alt="Preview" className="w-full h-full object-cover rounded-lg" />
+                      <button
+                        type="button"
+                        onClick={() => setImage('')}
+                        className="absolute -top-2 -right-2 bg-red-600 rounded-full p-1 hover:bg-red-700"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
               
               {/* Game và Category */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -597,26 +703,40 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Main Content Images */}
+              {/* Main Content Images Upload */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-semibold">Ảnh nội dung chính</h3>
-                  <button type="button" onClick={addImageToMainContent} className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded flex items-center space-x-1 text-sm">
-                    <Plus size={14}/> Thêm ảnh
-                  </button>
+                  <label className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded flex items-center space-x-1 text-sm cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            const url = await uploadImage(file, 'guides/content');
+                            setMainContentImages([...mainContentImages, url]);
+                          } catch (error) {
+                            console.error(error);
+                          }
+                        }
+                      }}
+                    />
+                    <Plus size={14}/> <span>Upload ảnh</span>
+                  </label>
                 </div>
-                <div className="space-y-2">
+                <div className="grid grid-cols-3 gap-3">
                   {mainContentImages.map((img, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <input 
-                        type="text" 
-                        placeholder={`Link ảnh ${index + 1}`} 
-                        value={img} 
-                        onChange={(e) => updateMainContentImage(index, e.target.value)} 
-                        className="flex-1 p-2 rounded bg-gray-800 border border-gray-700" 
-                      />
-                      <button type="button" onClick={(e) => removeMainContentImage(e, index)} className="bg-red-600 hover:bg-red-700 px-2 py-2 rounded">
-                        <Trash2 size={16}/>
+                    <div key={index} className="relative group">
+                      <img src={img} alt={`Content ${index + 1}`} className="w-full h-32 object-cover rounded-lg" />
+                      <button
+                        type="button"
+                        onClick={() => setMainContentImages(mainContentImages.filter((_, i) => i !== index))}
+                        className="absolute -top-2 -right-2 bg-red-600 rounded-full p-1 hover:bg-red-700 opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <X size={14} />
                       </button>
                     </div>
                   ))}
@@ -632,198 +752,250 @@ export default function AdminPage() {
               <div>
                 <h3 className="font-semibold mb-2">Sections</h3>
                 {sections.map(section => (
-                  <div key={section.id} className="mb-2 border border-gray-700 p-3 rounded-lg">
+                  <div key={section.id} className="mb-3 border border-gray-700 p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-2">
-                      <input type="text" placeholder="Tiêu đề section" value={section.title} onChange={(e) => updateSection(section.id, "title", e.target.value)} className="flex-1 p-2 rounded bg-gray-800 border border-gray-700" />
+                      <input 
+                        type="text" 
+                        placeholder="Tiêu đề section" 
+                        value={section.title} 
+                        onChange={(e) => updateSection(section.id, "title", e.target.value)} 
+                        className="flex-1 p-2 rounded bg-gray-800 border border-gray-700" 
+                      />
                       <div className="flex space-x-1 ml-2">
                         <button type="button" onClick={(e) => toggleSection(e, section.id)} className="px-2 py-1 bg-gray-700 rounded hover:bg-gray-600">
                           {expandedSections.has(section.id) ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
                         </button>
-                        <button type="button" onClick={(e) => removeSection(e, section.id)} className="px-2 py-1 bg-red-600 rounded hover:bg-red-700"><Trash2 size={16}/></button>
+                        <button type="button" onClick={(e) => removeSection(e, section.id)} className="px-2 py-1 bg-red-600 rounded hover:bg-red-700">
+                          <Trash2 size={16}/>
+                        </button>
                       </div>
                     </div>
 
                     {expandedSections.has(section.id) && (
-                      <div className="space-y-2">
-                        <textarea placeholder="Nội dung" value={section.content} onChange={(e) => updateSection(section.id, "content", e.target.value)} className="w-full p-2 rounded bg-gray-800 border border-gray-700"></textarea>
+                      <div className="space-y-3">
+                        <textarea 
+                          placeholder="Nội dung" 
+                          value={section.content} 
+                          onChange={(e) => updateSection(section.id, "content", e.target.value)} 
+                          className="w-full p-2 rounded bg-gray-800 border border-gray-700 min-h-[80px]"
+                        ></textarea>
                         
-                        {/* Section Images */}
+                        {/* Section Images Upload */}
                         <div>
-                          <div className="flex justify-between items-center mb-1">
+                          <div className="flex justify-between items-center mb-2">
                             <label className="text-sm text-gray-400">Ảnh section</label>
-                            <button type="button" onClick={(e) => addImageToSection(e, section.id)} className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded flex items-center space-x-1 text-xs">
-                              <Plus size={12}/> Thêm ảnh
-                            </button>
+                            <label className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded flex items-center space-x-1 text-xs cursor-pointer">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    try {
+                                      const url = await uploadImage(file, `guides/sections/${section.id}`);
+                                      updateSectionImage(section.id, (section.images || []).length, url);
+                                    } catch (error) {
+                                      console.error(error);
+                                    }
+                                  }
+                                }}
+                              />
+                              <Plus size={12}/> <span>Upload</span>
+                            </label>
                           </div>
-                          {(section.images || []).map((img, imgIndex) => (
-                            <div key={imgIndex} className="flex items-center space-x-2 mb-1">
+                          <div className="grid grid-cols-4 gap-2">
+                            {(section.images || []).map((img, imgIndex) => (
+                              <div key={imgIndex} className="relative group">
+                                <img src={img} alt={`Section ${imgIndex + 1}`} className="w-full h-20 object-cover rounded" />
+                                <button
+                                  type="button"
+                                  onClick={(e) => removeSectionImage(e, section.id, imgIndex)}
+                                  className="absolute -top-1 -right-1 bg-red-600 rounded-full p-1 hover:bg-red-700 opacity-0 group-hover:opacity-100 transition"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* SubSections */}
+                        <div className="ml-4 mt-3 space-y-2">
+                          <h4 className="font-semibold text-sm">SubSections</h4>
+                          {section.subSections.map(sub => (
+                            <div key={sub.id} className="border border-gray-600 p-3 rounded bg-gray-800/50">
                               <input 
                                 type="text" 
-                                placeholder={`Link ảnh ${imgIndex + 1}`}
-                                value={img} 
-                                onChange={(e) => updateSectionImage(section.id, imgIndex, e.target.value)} 
-                                className="flex-1 p-1 rounded bg-gray-800 border border-gray-700 text-sm" 
+                                placeholder="Tiêu đề subsection" 
+                                value={sub.title} 
+                                onChange={(e) => updateSubSection(section.id, sub.id, "title", e.target.value)} 
+                                className="w-full p-2 rounded bg-gray-800 border border-gray-700 mb-2 text-sm" 
                               />
-                              <button type="button" onClick={(e) => removeSectionImage(e, section.id, imgIndex)} className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded">
-                                <Trash2 size={14}/>
+                              <textarea 
+                                placeholder="Nội dung" 
+                                value={sub.content} 
+                                onChange={(e) => updateSubSection(section.id, sub.id, "content", e.target.value)} 
+                                className="w-full p-2 rounded bg-gray-800 border border-gray-700 mb-2 text-sm min-h-[60px]"
+                              ></textarea>
+                              
+                              {/* SubSection Images Upload */}
+                              <div className="mb-2">
+                                <div className="flex justify-between items-center mb-1">
+                                  <label className="text-xs text-gray-400">Ảnh subsection</label>
+                                  <label className="bg-blue-600 hover:bg-blue-700 px-2 py-0.5 rounded text-xs cursor-pointer">
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          try {
+                                            const url = await uploadImage(file, `guides/subsections/${sub.id}`);
+                                            updateSubSectionImage(section.id, sub.id, (sub.images || []).length, url);
+                                          } catch (error) {
+                                            console.error(error);
+                                          }
+                                        }
+                                      }}
+                                    />
+                                    <Plus size={10}/> Upload
+                                  </label>
+                                </div>
+                                <div className="grid grid-cols-4 gap-1">
+                                  {(sub.images || []).map((img, imgIndex) => (
+                                    <div key={imgIndex} className="relative group">
+                                      <img src={img} alt={`Sub ${imgIndex + 1}`} className="w-full h-16 object-cover rounded" />
+                                      <button
+                                        type="button"
+                                        onClick={(e) => removeSubSectionImage(e, section.id, sub.id, imgIndex)}
+                                        className="absolute -top-1 -right-1 bg-red-600 rounded-full p-0.5 hover:bg-red-700 opacity-0 group-hover:opacity-100 transition"
+                                      >
+                                        <X size={10} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              <button 
+                                type="button" 
+                                onClick={(e) => removeSubSection(e, section.id, sub.id)} 
+                                className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded flex items-center space-x-1 text-xs"
+                              >
+                                <Trash2 size={12} /> <span>Xóa Sub</span>
                               </button>
                             </div>
                           ))}
-                        </div>
-
-                        <div className="ml-4">
-                          <h4 className="font-semibold">SubSections</h4>
-                          {section.subSections.map(sub => (
-                            <div key={sub.id} className="mb-2 border border-gray-600 p-2 rounded">
-                              <input type="text" placeholder="Tiêu đề" value={sub.title} onChange={(e) => updateSubSection(section.id, sub.id, "title", e.target.value)} className="w-full p-1 rounded bg-gray-800 border border-gray-700 mb-1" />
-                              <textarea placeholder="Nội dung" value={sub.content} onChange={(e) => updateSubSection(section.id, sub.id, "content", e.target.value)} className="w-full p-1 rounded bg-gray-800 border border-gray-700 mb-1"></textarea>
-                              
-                              {/* SubSection Images */}
-                              <div className="mb-1">
-                                <div className="flex justify-between items-center mb-1">
-                                  <label className="text-xs text-gray-400">Ảnh subsection</label>
-                                  <button type="button" onClick={(e) => addImageToSubSection(e, section.id, sub.id)} className="bg-blue-600 hover:bg-blue-700 px-2 py-0.5 rounded text-xs">
-                                    <Plus size={10}/> Ảnh
-                                  </button>
-                                </div>
-                                {(sub.images || []).map((img, imgIndex) => (
-                                  <div key={imgIndex} className="flex items-center space-x-1 mb-1">
-                                    <input 
-                                      type="text" 
-                                      placeholder={`Link ảnh ${imgIndex + 1}`}
-                                      value={img} 
-                                      onChange={(e) => updateSubSectionImage(section.id, sub.id, imgIndex, e.target.value)} 
-                                      className="flex-1 p-1 rounded bg-gray-800 border border-gray-700 text-xs" 
-                                    />
-                                    <button type="button" onClick={(e) => removeSubSectionImage(e, section.id, sub.id, imgIndex)} className="bg-red-600 hover:bg-red-700 px-1 py-1 rounded">
-                                      <Trash2 size={12}/>
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                              
-                              <button type="button" onClick={(e) => removeSubSection(e, section.id, sub.id)} className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded flex items-center space-x-1 text-xs"><Trash2 size={14} /> Xóa Sub</button>
-                            </div>
-                          ))}
-                          <button type="button" onClick={(e) => addSubSection(e, section.id)} className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded flex items-center space-x-1"><Plus size={16}/> Thêm Sub</button>
+                          <button 
+                            type="button" 
+                            onClick={(e) => addSubSection(e, section.id)} 
+                            className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded flex items-center space-x-1 text-sm"
+                          >
+                            <Plus size={14}/> <span>Thêm Sub</span>
+                          </button>
                         </div>
                       </div>
                     )}
                   </div>
                 ))}
-                <button type="button" onClick={addSection} className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded flex items-center space-x-1"><Plus size={16}/> Thêm Section</button>
+                <button 
+                  type="button" 
+                  onClick={addSection} 
+                  className="bg-purple-600 hover:bg-purple-700 px-3 py-2 rounded flex items-center space-x-1"
+                >
+                  <Plus size={16}/> <span>Thêm Section</span>
+                </button>
               </div>
 
-              <button type="submit" className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded mt-4 flex items-center space-x-2"><Save size={18}/> Lưu Bài</button>
+              <button 
+                type="submit" 
+                disabled={uploading}
+                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 rounded mt-4 flex items-center space-x-2 w-full justify-center"
+              >
+                <Save size={18}/> <span>{uploading ? 'Đang xử lý...' : 'Lưu Bài'}</span>
+              </button>
             </form>
           </div>
         </div>
       )}
 
       {/* Category Management Modal */}
-{showCategoryModal && (
-  <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-    <div className="bg-gray-900 p-6 rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
-      <button 
-        onClick={() => setShowCategoryModal(false)} 
-        className="absolute top-4 right-4 text-gray-400 hover:text-white"
-      >
-        <X size={24} />
-      </button>
-      
-      <h2 className="text-2xl font-bold mb-6 flex items-center space-x-2">
-        <Tag size={24} />
-        <span>Quản lý Danh mục</span>
-      </h2>
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto relative">
+            <button 
+              onClick={() => setShowCategoryModal(false)} 
+              className="absolute top-4 right-4 text-gray-400 hover:text-white"
+            >
+              <X size={24} />
+            </button>
+            
+            <h2 className="text-2xl font-bold mb-6 flex items-center space-x-2">
+              <Tag size={24} />
+              <span>Quản lý Danh mục</span>
+            </h2>
 
-      {/* Add New Category */}
-      <div className="mb-8">
-        <h3 className="text-lg font-semibold mb-4">Thêm danh mục mới</h3>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (!newCategoryName.trim()) return;
-
-            try {
-              // Thêm category lên Firestore
-              const docRef = await addDoc(collection(db, "categories"), {
-                name: newCategoryName.trim(),
-                createdAt: serverTimestamp(), // Firestore Timestamp
-              });
-
-              // Cập nhật state local với Timestamp tương thích
-              setCategories(prev => [
-                ...prev,
-                {
-                  id: docRef.id,
-                  name: newCategoryName.trim(),
-                  createdAt: Timestamp.now(), // Timestamp cho local state
-                } as Category
-              ]);
-
-              setNewCategoryName("");
-            } catch (error) {
-              console.error("Lỗi khi thêm category:", error);
-            }
-          }}
-          className="flex space-x-3"
-        >
-          <input
-            type="text"
-            placeholder="Tên danh mục"
-            value={newCategoryName}
-            onChange={(e) => setNewCategoryName(e.target.value)}
-            className="flex-1 p-3 rounded-lg bg-gray-800 border border-gray-700"
-          />
-          <button 
-            type="submit" 
-            className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg flex items-center space-x-2"
-          >
-            <Plus size={18} />
-            <span>Thêm</span>
-          </button>
-        </form>
-      </div>
-
-      {/* Categories List */}
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Danh sách danh mục</h3>
-        {categories.length === 0 ? (
-          <p className="text-gray-400 text-center py-8">Chưa có danh mục nào</p>
-        ) : (
-          <div className="space-y-3">
-            {categories.map(category => (
-              <div  
-                key={category.id} 
-                className="flex items-center justify-between p-4 bg-gray-800 rounded-lg border border-gray-700"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
-                    <Tag size={16} className="text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white">{category.name}</h4>
-                    <p className="text-sm text-gray-400">
-                      Tạo lúc: {category.createdAt?.toDate().toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={(e) => deleteCategory(e, category.id)}
-                  className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg flex items-center space-x-2"
+            {/* Add New Category */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold mb-4">Thêm danh mục mới</h3>
+              <form onSubmit={addCategory} className="flex space-x-3">
+                <input
+                  type="text"
+                  placeholder="Tên danh mục"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  className="flex-1 p-3 rounded-lg bg-gray-800 border border-gray-700"
+                />
+                <button 
+                  type="submit" 
+                  className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg flex items-center space-x-2"
                 >
-                  <Trash2 size={16} />
-                  <span>Xóa</span>
+                  <Plus size={18} />
+                  <span>Thêm</span>
                 </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+              </form>
+            </div>
 
+            {/* Categories List */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Danh sách danh mục</h3>
+              {categories.length === 0 ? (
+                <p className="text-gray-400 text-center py-8">Chưa có danh mục nào</p>
+              ) : (
+                <div className="space-y-3">
+                  {categories.map(category => (
+                    <div  
+                      key={category.id} 
+                      className="flex items-center justify-between p-4 bg-gray-800 rounded-lg border border-gray-700"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                          <Tag size={16} className="text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-white">{category.name}</h4>
+                          <p className="text-sm text-gray-400">
+                            Tạo lúc: {category.createdAt?.toDate().toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => deleteCategory(e, category.id)}
+                        className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg flex items-center space-x-2"
+                      >
+                        <Trash2 size={16} />
+                        <span>Xóa</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

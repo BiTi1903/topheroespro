@@ -13,6 +13,10 @@ export default function Navbar() {
     { name: "Tính mảnh nâng cấp tướng", href: "/count/manhanhhung/" },
     { name: "Tính mảnh trang bị độc quyền", href: "/count/manhtrangbidocquyen/" },
     { name: "Tính tài nguyên nâng trang bị tướng", href: "/count/trangbianhhung/" },
+        { name: "Tính tài nguyên nâng cấp pháo đài", href: "/count/phaodai/" },
+                { name: "Tính thức ăn Pet", href: "/count/petfood/" },
+
+
 
   ],
 },

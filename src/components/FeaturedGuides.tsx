@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Eye } from "lucide-react";
+import { ChevronRight, Eye, ArrowUpDown } from "lucide-react";
 import { collection, getDocs, doc, updateDoc, increment, Timestamp } from "firebase/firestore";
 import { db } from "@/firebase";
 
@@ -15,16 +15,19 @@ interface Guide {
   category?: string;
   description: string;
   pinned?: boolean;
-  createdAt?: Date; // Sử dụng Date thay vì any
+  createdAt?: Date;
 }
 
 interface FeaturedGuidesProps {
   activeCategory?: string;
 }
 
+type SortOption = "featured" | "newest" | "views";
+
 export default function FeaturedGuides({ activeCategory = "all" }: FeaturedGuidesProps) {
   const [guides, setGuides] = useState<Guide[]>([]);
   const [showAll, setShowAll] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>("featured");
 
   useEffect(() => {
     const fetchGuides = async () => {
@@ -50,12 +53,10 @@ export default function FeaturedGuides({ activeCategory = "all" }: FeaturedGuide
             category: data.category,
             description: data.description,
             pinned: data.pinned || false,
-            createdAt: data.createdAt?.toDate(), // convert Timestamp -> Date
+            createdAt: data.createdAt?.toDate(),
           };
         });
 
-        // Pinned lên đầu
-        guidesData.sort((a, b) => Number(b.pinned) - Number(a.pinned));
         setGuides(guidesData);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu bài viết:", error);
@@ -63,6 +64,11 @@ export default function FeaturedGuides({ activeCategory = "all" }: FeaturedGuide
     };
     fetchGuides();
   }, []);
+
+  // Reset về "Nổi bật" khi đổi category
+  useEffect(() => {
+    setSortBy("featured");
+  }, [activeCategory]);
 
   const handleClick = async (id: string) => {
     try {
@@ -76,12 +82,47 @@ export default function FeaturedGuides({ activeCategory = "all" }: FeaturedGuide
     }
   };
 
+  const getSortedGuides = (guidesToSort: Guide[]) => {
+    const sorted = [...guidesToSort];
+    
+    switch (sortBy) {
+      case "featured":
+        // Nổi bật: Pinned lên đầu, sau đó theo thời gian mới nhất
+        sorted.sort((a, b) => {
+          if (a.pinned !== b.pinned) {
+            return Number(b.pinned) - Number(a.pinned);
+          }
+          if (a.createdAt && b.createdAt) {
+            return b.createdAt.getTime() - a.createdAt.getTime();
+          }
+          return 0;
+        });
+        break;
+      case "newest":
+        // Mới nhất trước
+        sorted.sort((a, b) => {
+          if (a.createdAt && b.createdAt) {
+            return b.createdAt.getTime() - a.createdAt.getTime();
+          }
+          return 0;
+        });
+        break;
+      case "views":
+        // Sắp xếp theo lượt xem cao nhất
+        sorted.sort((a, b) => (b.views || 0) - (a.views || 0));
+        break;
+    }
+    
+    return sorted;
+  };
+
   const filteredGuides = guides.filter(guide => {
     if (activeCategory === "all") return true;
     return guide.category === activeCategory;
   });
 
-  const displayedGuides = showAll ? filteredGuides : filteredGuides.slice(0, 6);
+  const sortedGuides = getSortedGuides(filteredGuides);
+  const displayedGuides = showAll ? sortedGuides : sortedGuides.slice(0, 6);
 
   if (filteredGuides.length === 0) {
     return (
@@ -103,7 +144,37 @@ export default function FeaturedGuides({ activeCategory = "all" }: FeaturedGuide
 
   return (
     <div className="lg:col-span-2 space-y-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+        {/* Nút sắp xếp */}
+        <div className="flex items-center space-x-2">
+          <ArrowUpDown className="w-4 h-4 text-purple-400" />
+          <select
+  value={sortBy}
+  onChange={(e) => setSortBy(e.target.value as SortOption)}
+  className="
+    bg-purple-500/10 border border-purple-400/30 text-purple-200
+    rounded-lg px-3 py-2 text-sm transition-all duration-200
+    cursor-pointer appearance-none outline-none
+    hover:bg-purple-500/20 hover:border-purple-400
+    focus:ring-2 focus:ring-purple-500/40 focus:border-purple-400
+  "
+  style={{
+    backgroundImage:
+      "linear-gradient(to bottom right, rgba(147, 51, 234, 0.15), rgba(0,0,0,0.15))",
+  }}
+>
+
+  <option value="newest" className="bg-[#1a0b2e] text-purple-100">
+    Mới nhất
+  </option>
+  <option value="views" className="bg-[#1a0b2e] text-purple-100">
+    Nhiều lượt xem
+  </option>
+</select>
+
+        </div>
+
+        {/* Nút xem tất cả */}
         <button
           className="text-purple-400 hover:text-purple-300 flex items-center space-x-1 cursor-pointer"
           onClick={() => {
