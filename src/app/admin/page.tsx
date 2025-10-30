@@ -70,7 +70,8 @@ export default function AdminPage() {
   const [newCategoryName, setNewCategoryName] = useState<string>("");
 
   // Helper: Upload image to Firebase Storage
-  const uploadImage = async (file: File, path: string): Promise<string> => {
+  // Sửa hàm uploadImage - thay any bằng unknown
+const uploadImage = async (file: File, path: string): Promise<string> => {
   try {
     setUploading(true);
     const timestamp = Date.now();
@@ -95,18 +96,25 @@ export default function AdminPage() {
     console.log('Download URL:', downloadURL);
     
     return downloadURL;
-  } catch (error: any) {
+  } catch (error: unknown) {  // Thay any bằng unknown
     console.error("Upload error details:", error);
     
-    // Xử lý các loại lỗi cụ thể
-    if (error.code === 'storage/unauthorized') {
-      alert('Lỗi: Không có quyền upload. Vui lòng đăng nhập lại!');
-    } else if (error.code === 'storage/canceled') {
-      alert('Upload đã bị hủy');
-    } else if (error.code === 'storage/unknown') {
-      alert('Lỗi không xác định. Vui lòng kiểm tra kết nối internet!');
+    // Type guard để kiểm tra error có thuộc tính code
+    if (error && typeof error === 'object' && 'code' in error) {
+      const firebaseError = error as { code: string; message?: string };
+      
+      // Xử lý các loại lỗi cụ thể
+      if (firebaseError.code === 'storage/unauthorized') {
+        alert('Lỗi: Không có quyền upload. Vui lòng đăng nhập lại!');
+      } else if (firebaseError.code === 'storage/canceled') {
+        alert('Upload đã bị hủy');
+      } else if (firebaseError.code === 'storage/unknown') {
+        alert('Lỗi không xác định. Vui lòng kiểm tra kết nối internet!');
+      } else {
+        alert('Lỗi khi upload ảnh: ' + (firebaseError.message || 'Unknown error'));
+      }
     } else {
-      alert('Lỗi khi upload ảnh: ' + error.message);
+      alert('Lỗi khi upload ảnh: ' + String(error));
     }
     
     throw error;
@@ -114,6 +122,12 @@ export default function AdminPage() {
     setUploading(false);
   }
 };
+
+// Giải thích:
+// 1. Thay `error: any` bằng `error: unknown` - best practice trong TypeScript
+// 2. Sử dụng type guard để kiểm tra error có thuộc tính 'code'
+// 3. Type assertion `as { code: string; message?: string }` khi đã chắc chắn là Firebase error
+// 4. Xử lý trường h
 
   // Helper: Handle file input change
   const handleFileChange = async (
