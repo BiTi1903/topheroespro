@@ -1,10 +1,18 @@
-// lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 import { getAnalytics } from "firebase/analytics";
-import { getDatabase, ref, set, get, onValue, update } from "firebase/database";
+import {
+  getDatabase,
+  ref,
+  set,
+  get,
+  onValue,
+  update,
+  DataSnapshot,
+  DatabaseReference,
+} from "firebase/database";
 
 // ======================
 // 🔥 Firebase Config
@@ -32,6 +40,21 @@ export const database = getDatabase(app);
 export const analytics = typeof window !== "undefined" ? getAnalytics(app) : undefined;
 
 // ======================
+// 🧩 Kiểu dữ liệu
+// ======================
+interface FirebaseUser {
+  uid: string;
+  registeredAt: string;
+  claimed: boolean;
+  claimedAt?: string;
+}
+
+interface FirebaseCode {
+  code: string;
+  updatedAt: string;
+}
+
+// ======================
 // 🧩 Helper Functions
 // ======================
 export const firebaseService = {
@@ -46,20 +69,20 @@ export const firebaseService = {
     }
 
     await set(userRef, {
-      uid: uid,
+      uid,
       registeredAt: new Date().toISOString(),
       claimed: false,
-    });
+    } satisfies FirebaseUser);
 
     console.log("✅ Đã lưu UID:", uid);
   },
 
   // 📦 Lấy danh sách user
-  async getUsers() {
+  async getUsers(): Promise<FirebaseUser[]> {
     const usersRef = ref(database, "topheroes/users");
     const snapshot = await get(usersRef);
     if (snapshot.exists()) {
-      const data = snapshot.val();
+      const data = snapshot.val() as Record<string, FirebaseUser>;
       return Object.values(data);
     }
     return [];
@@ -69,16 +92,16 @@ export const firebaseService = {
   async updateCode(code: string) {
     const codeRef = ref(database, "topheroes/currentCode");
     await set(codeRef, {
-      code: code,
+      code,
       updatedAt: new Date().toISOString(),
-    });
+    } satisfies FirebaseCode);
 
     // Reset trạng thái claimed cho tất cả users
     const usersRef = ref(database, "topheroes/users");
     const snapshot = await get(usersRef);
     if (snapshot.exists()) {
-      const users = snapshot.val();
-      const updates: any = {};
+      const users = snapshot.val() as Record<string, FirebaseUser>;
+      const updates: Record<string, boolean> = {};
       Object.keys(users).forEach((uid) => {
         updates[`topheroes/users/${uid}/claimed`] = false;
       });
@@ -89,11 +112,11 @@ export const firebaseService = {
   },
 
   // 🔍 Lấy code hiện tại
-  async getCurrentCode() {
+  async getCurrentCode(): Promise<string> {
     const codeRef = ref(database, "topheroes/currentCode");
     const snapshot = await get(codeRef);
     if (snapshot.exists()) {
-      return snapshot.val().code;
+      return (snapshot.val() as FirebaseCode).code;
     }
     return "";
   },
@@ -110,11 +133,11 @@ export const firebaseService = {
   },
 
   // 🕒 Lắng nghe thay đổi users (Realtime)
-  onUsersChange(callback: (users: any[]) => void) {
+  onUsersChange(callback: (users: FirebaseUser[]) => void) {
     const usersRef = ref(database, "topheroes/users");
-    return onValue(usersRef, (snapshot) => {
+    return onValue(usersRef, (snapshot: DataSnapshot) => {
       if (snapshot.exists()) {
-        const data = snapshot.val();
+        const data = snapshot.val() as Record<string, FirebaseUser>;
         callback(Object.values(data));
       } else {
         callback([]);
@@ -125,9 +148,10 @@ export const firebaseService = {
   // 🕒 Lắng nghe thay đổi code (Realtime)
   onCodeChange(callback: (code: string) => void) {
     const codeRef = ref(database, "topheroes/currentCode");
-    return onValue(codeRef, (snapshot) => {
+    return onValue(codeRef, (snapshot: DataSnapshot) => {
       if (snapshot.exists()) {
-        callback(snapshot.val().code);
+        const data = snapshot.val() as FirebaseCode;
+        callback(data.code);
       } else {
         callback("");
       }
@@ -136,21 +160,21 @@ export const firebaseService = {
 };
 
 // ======================
-// 🧩 Hàm tiện ích trực tiếp (nếu cần gọi ngoài firebaseService)
+// 🧩 Hàm tiện ích trực tiếp
 // ======================
 export async function saveUser(uid: string) {
   const userRef = ref(database, `topheroes/users/${uid}`);
   await set(userRef, {
-    uid: uid,
+    uid,
     registeredAt: new Date().toISOString(),
     claimed: false,
-  });
+  } satisfies FirebaseUser);
 }
 
 export async function saveCurrentCode(code: string) {
   const codeRef = ref(database, "topheroes/currentCode");
   await set(codeRef, {
-    code: code,
+    code,
     updatedAt: new Date().toISOString(),
-  });
+  } satisfies FirebaseCode);
 }
