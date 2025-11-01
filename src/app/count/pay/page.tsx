@@ -29,7 +29,7 @@ export default function RechargeCalculator() {
 
   const calculateMoney = () => {
     const pointValue = parseFloat(points) || 0;
-    return Math.floor((pointValue * 2200000) / 648);
+    return Math.floor((pointValue * 2300000) / 648);
   };
 
   const money = calculateMoney();
