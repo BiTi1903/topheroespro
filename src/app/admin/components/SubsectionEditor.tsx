@@ -54,7 +54,9 @@ export default function SubSectionEditor({
               sub.id === subSection.id 
                 ? {
                     ...sub,
-                    images: (sub.images || []).map((img, i) => i === imageIndex ? value : img)
+                    images: sub.images ? 
+                      [...sub.images.slice(0, imageIndex), value, ...sub.images.slice(imageIndex)]
+                      : [value]
                   }
                 : sub
             )
@@ -98,7 +100,7 @@ export default function SubSectionEditor({
       {/* SubSection Images Upload */}
       <div className="mb-2">
         <div className="flex justify-between items-center mb-1">
-          <label className="text-xs text-gray-400">Ảnh subsection</label>
+          <label className="text-xs text-gray-400">Ảnh subsection ({(subSection.images || []).length})</label>
           <label className="bg-blue-600 hover:bg-blue-700 px-2 py-0.5 rounded text-xs cursor-pointer">
             <input
               type="file"
@@ -108,10 +110,24 @@ export default function SubSectionEditor({
                 const file = e.target.files?.[0];
                 if (file) {
                   try {
-                    const url = await uploadImage(file, `guides/subsections/${subSection.id}`, setUploading);
-                    updateSubSectionImage((subSection.images || []).length, url);
+                    console.log('🔵 Uploading subsection image...');
+                    const url = await uploadImage(file, 'guides/subsections', setUploading);
+                    console.log('✅ Subsection image uploaded:', url);
+                    // Thêm ảnh mới vào cuối mảng
+                    setSections(sections.map(section => 
+                      section.id === sectionId 
+                        ? {
+                            ...section,
+                            subSections: section.subSections.map(sub =>
+                              sub.id === subSection.id 
+                                ? { ...sub, images: [...(sub.images || []), url] }
+                                : sub
+                            )
+                          }
+                        : section
+                    ));
                   } catch (error) {
-                    console.error(error);
+                    console.error('❌ Subsection image upload failed:', error);
                   }
                 }
               }}

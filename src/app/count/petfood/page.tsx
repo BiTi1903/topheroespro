@@ -16,7 +16,7 @@ export default function PetFoodCalculator() {
       needed?: string;
     };
   } = {
-    1: { food: 0, promo: "Pet xanh", needed: "1 phôi cùng loại" },
+    1: { food: 0, promo: "Pet xanh", },
     2: { food: 100 },
     3: { food: 150 },
     4: { food: 200 },
@@ -106,9 +106,6 @@ export default function PetFoodCalculator() {
     88: { food: 17100 },
     89: { food: 17500 },
     90: { food: 17900, promo: "Pet đỏ", essence: 1000, needed: "3 phôi cùng loại + 10 phôi bất kỳ + 1000 tinh chất thú cưng" },
-    91: { food: 5900, essence: 50 },
-    100: { food: 7000, essence: 500 },
-   
   };
 
   const levels = Object.keys(petData).map(Number);
@@ -120,6 +117,41 @@ export default function PetFoodCalculator() {
   const totalEssence = levels
     .filter((lv) => lv > currentLevel && lv <= targetLevel)
     .reduce((sum, lv) => sum + (petData[lv]?.essence || 0), 0);
+
+  // Calculate total embryos needed
+  const calculateEmbryos = () => {
+    let sameType = 0;
+    let anyType = 0;
+    
+    levels
+      .filter((lv) => lv > currentLevel && lv <= targetLevel)
+      .forEach((lv) => {
+        const needed = petData[lv]?.needed;
+        if (needed) {
+          // Extract numbers from "X phôi cùng loại + Y phôi bất kỳ"
+          const sameMatch = needed.match(/(\d+)\s*phôi cùng loại/);
+          const anyMatch = needed.match(/\+\s*(\d+)\s*phôi bất kỳ/);
+          
+          if (sameMatch) sameType += parseInt(sameMatch[1]);
+          if (anyMatch) anyType += parseInt(anyMatch[1]);
+          
+          // Handle cases with only "X phôi bất kỳ" or "X phôi cùng loại"
+          if (!sameMatch && !anyMatch) {
+            if (needed.includes('phôi cùng loại')) {
+              const match = needed.match(/(\d+)\s*phôi cùng loại/);
+              if (match) sameType += parseInt(match[1]);
+            } else if (needed.includes('phôi bất kỳ')) {
+              const match = needed.match(/(\d+)\s*phôi bất kỳ/);
+              if (match) anyType += parseInt(match[1]);
+            }
+          }
+        }
+      });
+    
+    return { sameType, anyType };
+  };
+
+  const { sameType: totalSameTypeEmbryos, anyType: totalAnyTypeEmbryos } = calculateEmbryos();
 
   const targetLevelData = petData[targetLevel];
   const targetNeeded = targetLevelData?.needed;
@@ -161,7 +193,7 @@ export default function PetFoodCalculator() {
             </h1>
             <Sparkles className="w-8 h-8 text-yellow-400" />
           </div>
-          <p className="text-purple-200">Level 1 → 100</p>
+          <p className="text-purple-200">Level 1 → 90</p>
         </div>
 
         {/* Main Card */}
@@ -259,7 +291,7 @@ export default function PetFoodCalculator() {
           <div className="space-y-4">
             <h3 className="text-white font-bold text-center text-xl mb-4">Tài nguyên cần thiết</h3>
             
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className={`relative group rounded-xl p-5 text-center bg-gradient-to-br ${getLevelBgColor(targetLevel)} border-2`}>
                 <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
                 <div className="relative">
@@ -280,13 +312,15 @@ export default function PetFoodCalculator() {
                 </div>
               )}
               
+              
+              
               {targetNeeded && (
                 <div className={`relative group rounded-xl p-5 text-center bg-gradient-to-br ${getLevelBgColor(targetLevel)} border-2`}>
                   <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
                   <div className="relative">
                     <div className="mb-2 text-4xl">🐾</div>
-                    <div className="text-pink-200 text-sm mb-1 font-medium">Phôi cần thiết</div>
-                    <div className="text-pink-100 text-lg font-bold">{targetNeeded}</div>
+                    <div className="text-pink-200 text-sm mb-1 font-medium">Đột phá Level {targetLevel}</div>
+                    <div className="text-pink-100 text-sm font-bold">{targetNeeded}</div>
                     {targetPromo && (
                       <div className="mt-2">
                         <span className="inline-block px-3 py-1 bg-gradient-to-r from-yellow-400 to-pink-500 rounded-full text-xs font-black text-white shadow-lg">
@@ -294,6 +328,27 @@ export default function PetFoodCalculator() {
                         </span>
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+              {(totalSameTypeEmbryos > 0 || totalAnyTypeEmbryos > 0) && (
+                <div className={`relative group rounded-xl p-5 text-center bg-gradient-to-br ${getLevelBgColor(targetLevel)} border-2`}>
+                  <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
+                  <div className="relative">
+                    <div className="mb-2 text-4xl">🥚</div>
+                    <div className="text-pink-200 text-sm mb-1 font-medium">Tổng Phôi Cần</div>
+                    <div className="space-y-1">
+                      {totalSameTypeEmbryos > 0 && (
+                        <div className="text-pink-100 text-base font-bold">
+                          Cùng loại: {totalSameTypeEmbryos}
+                        </div>
+                      )}
+                      {totalAnyTypeEmbryos > 0 && (
+                        <div className="text-purple-200 text-base font-bold">
+                          Bất kỳ: {totalAnyTypeEmbryos}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -352,26 +407,21 @@ export default function PetFoodCalculator() {
             <div className="text-blue-200 text-xs space-y-1">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span>Level 1-19: Pet Food</span>
+                <span>Level 1-44: Pet Xanh</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-                <span>Level 20-44: Pet Food + Promotion</span>
+                <span>Level 45-74: Pet Tím</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                <span>Level 45-90: Pet Food + Pet Essence</span>
+                <span>Level 75-89: Pet Vàng</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-pink-400 rounded-full"></div>
-                <span>Level 91+: Mythic Pets</span>
+                <span>Level 90+: Pet Đỏ</span>
               </div>
-              <div className="flex items-center gap-2 mt-2 pt-2 border-t border-blue-500/20">
-                <div className="w-2 h-2 bg-pink-400 rounded-full ring-2 ring-pink-400"></div>
-                <span>Level mục tiêu | </span>
-                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                <span>Trong khoảng chọn</span>
-              </div>
+              
             </div>
           </div>
         </div>

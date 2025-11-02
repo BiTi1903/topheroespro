@@ -24,15 +24,12 @@ export default function Navbar() {
     {
       name: "Mùa giải",
       items: [
-        { name: "S1", href: "/seasons/s1" },
-        { name: "S2", href: "/seasons/s2" },
         { name: "S3", href: "/guides/76e9EiC8iwLG4M1DO0Ij" },
       ],
     },
     {
       name: "Anh Hùng",
       items: [
-        { name: "Thức Tỉnh", href: "/guides/RJAJKLFTiN4KPds12YBx" },
         { name: "Trang Bị", href: "/guides/OhCEUvncN1wkiWqiBJRJ" },
       ],
     },

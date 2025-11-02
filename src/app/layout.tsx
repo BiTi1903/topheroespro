@@ -4,7 +4,7 @@ import Footer from '@/components/Footer'; // import component Footer
 
 export const metadata = {
   title: 'GameGuide',
-  description: 'Hướng dẫn game chuyên nghiệp',
+  description: 'Chơi cùng Topheroes Pro',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -56,7 +56,9 @@ export default function SectionEditor({
       s.id === section.id 
         ? {
             ...s,
-            images: (s.images || []).map((img, i) => i === imageIndex ? value : img)
+            images: s.images ? 
+              [...s.images.slice(0, imageIndex), value, ...s.images.slice(imageIndex)] 
+              : [value]
           }
         : s
     ));
@@ -126,7 +128,7 @@ export default function SectionEditor({
           {/* Section Images Upload */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="text-sm text-gray-400">Ảnh section</label>
+              <label className="text-sm text-gray-400">Ảnh section ({(section.images || []).length})</label>
               <label className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded flex items-center space-x-1 text-xs cursor-pointer">
                 <input
                   type="file"
@@ -136,10 +138,17 @@ export default function SectionEditor({
                     const file = e.target.files?.[0];
                     if (file) {
                       try {
+                        console.log('🔵 Uploading section image...');
                         const url = await uploadImage(file, `guides/sections/${section.id}`, setUploading);
-                        updateSectionImage((section.images || []).length, url);
+                        console.log('✅ Section image uploaded:', url);
+                        // Thêm ảnh mới vào cuối mảng
+                        setSections(sections.map(s => 
+                          s.id === section.id 
+                            ? { ...s, images: [...(s.images || []), url] }
+                            : s
+                        ));
                       } catch (error) {
-                        console.error(error);
+                        console.error('❌ Section image upload failed:', error);
                       }
                     }
                   }}
