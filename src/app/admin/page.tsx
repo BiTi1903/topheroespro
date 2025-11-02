@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { auth } from "@/firebase";
 import { User, signOut, onAuthStateChanged } from "firebase/auth";
 import { Plus, LogOut, Settings } from "lucide-react";
-import { Guide, Category } from "./types";
+import { Guide, Category, Section } from "./types"; // 👈 Thêm Section
 import * as services from "./services";
 import LoginForm from "./components/LoginForm";
 import GuideTable from "./components/GuideTable";
@@ -14,22 +14,22 @@ import CategoryModal from "./components/CategoryModal";
 
 export default function AdminPage() {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [guides, setGuides] = useState<Guide[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [showCategoryModal, setShowCategoryModal] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [editingGuide, setEditingGuide] = useState<Guide | null>(null);
-  const [uploading, setUploading] = useState<boolean>(false);
+  const [uploading, setUploading] = useState(false);
 
+  // ✅ Lấy user hiện tại
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
-      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
+  // ✅ Khi có user -> load data
   useEffect(() => {
     if (user) {
       loadGuides();
@@ -56,7 +56,7 @@ export default function AdminPage() {
   const handleAddCategory = async (name: string) => {
     try {
       const newCategory = await services.addCategory(name);
-      setCategories(prev => [...prev, newCategory]);
+      setCategories((prev) => [...prev, newCategory]);
       alert("Thêm danh mục thành công!");
     } catch (err) {
       console.error(err);
@@ -67,7 +67,7 @@ export default function AdminPage() {
   const handleDeleteCategory = async (categoryId: string) => {
     try {
       await services.deleteCategory(categoryId);
-      setCategories(prev => prev.filter(c => c.id !== categoryId));
+      setCategories((prev) => prev.filter((c) => c.id !== categoryId));
       alert("Xóa danh mục thành công!");
     } catch (err) {
       console.error(err);
@@ -85,45 +85,55 @@ export default function AdminPage() {
     setEditingGuide(null);
   };
 
+  // ✅ Chuẩn hóa kiểu dữ liệu đầu vào khi lưu bài viết
   const handleSaveGuide = async (data: {
     title: string;
     description: string;
     content: string;
     image: string;
     mainContentImages: string[];
-    sections: any[];
+    sections: Section[]; // 👈 Dùng Section từ types.ts
     category: string;
     game: string;
     pinned: boolean;
   }) => {
     try {
-      await services.saveGuide(data, editingGuide?.id);
-      alert(editingGuide ? "Cập nhật bài báo thành công!" : "Thêm bài báo thành công!");
+      await services.saveGuide(
+        {
+          ...data,
+          sections: data.sections.map((s) => ({
+            ...s,
+            subSections: s.subSections || [], // 👈 đảm bảo có subSections nếu type yêu cầu
+          })),
+        },
+        editingGuide?.id
+      );
+
+      alert(editingGuide ? "Cập nhật bài viết thành công!" : "Thêm bài viết thành công!");
       closeModal();
       loadGuides();
     } catch (err) {
       console.error(err);
-      alert("Lỗi khi lưu bài báo");
+      alert("Lỗi khi lưu bài viết");
     }
   };
 
   const handleDeleteGuide = async (id: string) => {
     try {
       await services.deleteGuide(id);
-      alert("Xóa bài báo thành công!");
+      alert("Xóa bài viết thành công!");
       loadGuides();
     } catch (err) {
       console.error(err);
-      alert("Lỗi khi xóa bài báo");
+      alert("Lỗi khi xóa bài viết");
     }
   };
 
-  if (!user) {
-    return <LoginForm />;
-  }
+  if (!user) return <LoginForm />;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6">
+      {/* Overlay upload */}
       {uploading && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
           <div className="bg-gray-900 p-8 rounded-2xl text-center">
@@ -133,37 +143,40 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Quản lý Bài Viết</h1>
         <div className="flex space-x-3">
-          <button 
-            onClick={() => setShowCategoryModal(true)} 
+          <button
+            onClick={() => setShowCategoryModal(true)}
             className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
           >
-            <Settings size={18} /> <span>Quản lý Danh mục</span>
+            <Settings size={18} />
+            <span>Quản lý Danh mục</span>
           </button>
-          <button 
-            onClick={handleLogout} 
+          <button
+            onClick={handleLogout}
             className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg"
           >
-            <LogOut size={18} /> <span>Đăng xuất</span>
+            <LogOut size={18} />
+            <span>Đăng xuất</span>
           </button>
         </div>
       </div>
 
-      <button 
-        onClick={() => openModal()} 
+      {/* Nút thêm bài */}
+      <button
+        onClick={() => openModal()}
         className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg mb-4"
       >
-        <Plus size={18} /> <span>Thêm Bài Mới</span>
+        <Plus size={18} />
+        <span>Thêm Bài Mới</span>
       </button>
 
-      <GuideTable 
-        guides={guides} 
-        onEdit={openModal} 
-        onDelete={handleDeleteGuide} 
-      />
+      {/* Bảng bài viết */}
+      <GuideTable guides={guides} onEdit={openModal} onDelete={handleDeleteGuide} />
 
+      {/* Modal bài viết */}
       {showModal && (
         <GuideModal
           guide={editingGuide}
@@ -175,6 +188,7 @@ export default function AdminPage() {
         />
       )}
 
+      {/* Modal danh mục */}
       {showCategoryModal && (
         <CategoryModal
           categories={categories}
