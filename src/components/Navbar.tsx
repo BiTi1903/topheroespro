@@ -33,16 +33,13 @@ export default function Navbar() {
       name: "Anh Hùng",
       items: [
         { name: "Thức Tỉnh", href: "/guides/RJAJKLFTiN4KPds12YBx" },
-        { name: "Thiên Phú", href: "/tuong/rpg" },
         { name: "Trang Bị", href: "/guides/OhCEUvncN1wkiWqiBJRJ" },
-        { name: "Chiến Thuật", href: "/tuong/strategy" },
       ],
     },
     {
       name: "Lỗi thường gặp",
       items: [
         { name: "Lỗi mất tài khoản", href: "/guides/Ik9Mi3LgfMN4USJITBY0" },
-        { name: "Lỗi game", href: "/" },
       ],
     },
   ];

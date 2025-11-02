@@ -45,17 +45,6 @@ export default function Hero() {
             <span className="relative z-10">💎 Web Nạp</span>
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 translate-x-[-150%] group-hover:translate-x-[200%] transition-transform duration-700 ease-out"></div>
           </a>
-
-          <a
-            href="https://topheroes.hhgame.vn/tichnap"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative px-4 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition duration-300 overflow-hidden group"
-          >
-            <span className="relative z-10">💲Web tích nạp</span>
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 translate-x-[-150%] group-hover:translate-x-[200%] transition-transform duration-700 ease-out"></div>
-          </a>
-
           {/* 🔹 Nút Thử Vận May */}
           <Link
             href="/vanmay"
@@ -64,6 +53,18 @@ export default function Hero() {
             <span className="relative z-10">🎲 Thử Vận May</span>
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 translate-x-[-150%] group-hover:translate-x-[200%] transition-transform duration-700 ease-out"></div>
           </Link>
+
+          <a
+            href="https://topheroes.hhgame.vn/tichnapthang11"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative px-4 py-2 sm:px-10 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition duration-300 overflow-hidden group"
+          >
+            <span className="relative z-10">💲Web tích nạp</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 translate-x-[-150%] group-hover:translate-x-[200%] transition-transform duration-700 ease-out"></div>
+          </a>
+
+          
         </div>
       </div>
 
