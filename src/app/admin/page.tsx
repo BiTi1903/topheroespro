@@ -125,7 +125,7 @@ export default function AdminPage() {
       loadGuides();
     } catch (err) {
       console.error(err);
-      alert("Lỗi khi xóa bài viết");
+      alert("Bạn không có quyền xóa bài viết này! Vui lòng liên hệ quản trị viên.");
     }
   };
 

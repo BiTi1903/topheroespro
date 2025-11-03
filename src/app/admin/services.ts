@@ -33,10 +33,17 @@ export const fetchGuides = async (): Promise<Guide[]> => {
         pinned: data.pinned || false,
       };
     });
+    
     return guidesData.sort((a, b) => {
+      // Ưu tiên pinned lên đầu
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
-      return b.createdAt.seconds - a.createdAt.seconds;
+      
+      // Kiểm tra an toàn cho createdAt
+      const aTime = a.createdAt?.seconds || 0;
+      const bTime = b.createdAt?.seconds || 0;
+      
+      return bTime - aTime; // Mới nhất lên đầu
     });
   } catch (err) {
     console.error("Lỗi khi lấy bài báo:", err);
